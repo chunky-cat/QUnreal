@@ -3,17 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "QuakeMap.h"
 #include "Modules/ModuleManager.h"
 
-class FQunrealModule : public IModuleInterface
+class FQUnrealModule : public IModuleInterface
 {
 public:
 
 	/** IModuleInterface implementation */
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
-private:
-	TSharedPtr<FQMapAssetTypeAction> FQMapAssetTypeActions;
 
+	virtual bool SupportsDynamicReloading() override
+	{
+		return true;
+	}
 };

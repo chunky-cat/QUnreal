@@ -1,10 +1,30 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
-
+using System.IO;
 using UnrealBuildTool;
 
-public class Qunreal : ModuleRules
+public class QUnreal : ModuleRules
 {
-	public Qunreal(ReadOnlyTargetRules Target) : base(Target)
+	
+	private string ThirdPartyPath()
+	{
+		return Path.Combine(ModuleDirectory, "..", "..", "ThirdParty");
+	}
+
+	private string IncludePath()
+	{
+		return Path.Combine(ThirdPartyPath(), "include");
+	}
+    
+	private string GetOSLibPath()
+	{
+		if (Target.Platform == UnrealTargetPlatform.Mac)
+		{
+			return Path.Combine(ThirdPartyPath(), "Libs", "Mac");
+		}
+		return Path.Combine(ThirdPartyPath(), "Libs", "Win");
+	}
+	
+	public QUnreal(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
@@ -38,11 +58,16 @@ public class Qunreal : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"UnrealEd",
+				"RawMesh",
+				"UMG"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
 		
+		PublicAdditionalLibraries.Add(GetOSLibPath() + "/libglm.a");
+		PublicAdditionalLibraries.Add(GetOSLibPath() + "/libqformats.dylib");
+		PublicIncludePaths.AddRange( new string[] {IncludePath()});
+
 		
 		DynamicallyLoadedModuleNames.AddRange(
 			new string[]

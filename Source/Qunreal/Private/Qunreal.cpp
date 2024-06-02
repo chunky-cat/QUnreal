@@ -1,21 +1,20 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "Qunreal.h"
+#include "QUnreal.h"
 
-#define LOCTEXT_NAMESPACE "FQunrealModule"
+#define LOCTEXT_NAMESPACE "FQUnrealModule"
 
-void FQunrealModule::StartupModule()
+void FQUnrealModule::StartupModule()
 {
-	FQMapAssetTypeActions = MakeShared<FQMapAssetTypeAction>();
-	FAssetToolsModule::GetModule().Get().RegisterAssetTypeActions(FQMapAssetTypeActions.ToSharedRef());
+	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 }
 
-void FQunrealModule::ShutdownModule()
+void FQUnrealModule::ShutdownModule()
 {
-	if (!FModuleManager::Get().IsModuleLoaded("Qunreal")) return;
-	FAssetToolsModule::GetModule().Get().UnregisterAssetTypeActions(FQMapAssetTypeActions.ToSharedRef());
+	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
+	// we call this function before unloading the module.
 }
 
 #undef LOCTEXT_NAMESPACE
 	
-IMPLEMENT_MODULE(FQunrealModule, Qunreal)
+IMPLEMENT_MODULE(FQUnrealModule, QUnreal)
