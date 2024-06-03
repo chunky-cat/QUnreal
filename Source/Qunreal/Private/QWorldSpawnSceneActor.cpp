@@ -1,4 +1,5 @@
 #include "QWorldSpawnSceneActor.h"
+#include "PhysicsEngine/BodySetup.h"
 
 // Sets default values
 AQWorldSpawnSceneActor::AQWorldSpawnSceneActor()
@@ -30,11 +31,7 @@ void AQWorldSpawnSceneActor::OnConstruction(const FTransform& Transform)
 	if (QuakeMapAsset != nullptr && QuakeMapAsset->WorldSpawnMesh != nullptr)
 	{
 		WorldSpawnMeshComponent->SetStaticMesh(QuakeMapAsset->WorldSpawnMesh);
-		onAssetCallbackID = QuakeMapAsset->RegisterOnUpdatedCallback([this](){OnAssetUpdate();});
+		WorldSpawnMeshComponent->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
+		WorldSpawnMeshComponent->UpdateCollisionFromStaticMesh();
 	}
-}
-
-void AQWorldSpawnSceneActor::OnAssetUpdate() const
-{
-	WorldSpawnMeshComponent->SetStaticMesh(QuakeMapAsset->WorldSpawnMesh);
 }

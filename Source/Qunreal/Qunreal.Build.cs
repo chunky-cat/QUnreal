@@ -64,9 +64,7 @@ public class QUnreal : ModuleRules
 			}
 			);
 		
-		PublicAdditionalLibraries.Add(GetOSLibPath() + "/libglm.a");
-		PublicAdditionalLibraries.Add(GetOSLibPath() + "/libqformats.dylib");
-		PublicIncludePaths.AddRange( new string[] {IncludePath()});
+		PublicIncludePaths.AddRange( new string[] {Path.Combine(ModuleDirectory, "qformats", "include")});
 
 		
 		DynamicallyLoadedModuleNames.AddRange(

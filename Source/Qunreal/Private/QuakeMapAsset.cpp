@@ -15,10 +15,10 @@ qformats::textures::ITexture *UQuakeMapAsset::onTextureRequest(std::string name,
 	auto MaterialInstance = UMaterialInstanceDynamic::Create(BaseMaterial, this);
 	MaterialInstance->SetTextureParameterValue("BaseTexture", texture);
 	auto metatex = new qformats::textures::Texture<UMaterialInstanceDynamic*>();
-	metatex->SetWidth(texture->GetSizeX());
-	metatex->SetHeight(texture->GetSizeY());
+	metatex->SetWidth(texture->GetImportedSize().X);
+	metatex->SetHeight(texture->GetImportedSize().Y);
 	metatex->SetData(MaterialInstance);
-	Materials.Emplace(MaterialInstance);
+	Materials.Push(MaterialInstance);
 	return metatex;
 }
 
@@ -31,6 +31,11 @@ void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 
 	NativeMap = new qformats::map::QMap();
 	NativeMap->LoadFile(std::string(TCHAR_TO_UTF8(*fileName)));
+
+	NativeMap->ExcludeTextureSurface("SKY1");
+	NativeMap->ExcludeTextureSurface("CLIP");
+	NativeMap->ExcludeTextureSurface("SKIP");
+	
 	NativeMap->GenerateGeometry();
 	UMaterial* BaseMaterial = static_cast<UMaterial*>(StaticLoadObject(UMaterial::StaticClass(), nullptr, TEXT("/QUnreal/Materials/M_WadMaster"), nullptr,
 	                                                                   LOAD_None, nullptr));
@@ -38,45 +43,34 @@ void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 	FWadManager::GetInstance()->Refresh();
 	NativeMap->LoadTextures([this,BaseMaterial](std::string name) -> qformats::textures::ITexture *
 								 { return this->onTextureRequest(name,BaseMaterial); });
-	
-	if (NativeMap->solidEntities.size() == 0)
+
+	/*
+	for (auto Textures = NativeMap->GetTextures(); const auto Texture : Textures)
+	{
+		auto DynMat = static_cast<qformats::textures::Texture<UMaterialInstanceDynamic*>*>(Texture);
+		Materials.Push(DynMat->Data());	
+	}
+	*/
+	if (NativeMap->GetSolidEntities().size() == 0)
 		return;
 	
 	
-	WorldSpawnMesh = ConvertEntityToModel(NativeMap->solidEntities[0]);
+	WorldSpawnMesh = ConvertEntityToModel(NativeMap->GetSolidEntities()[0]);
 	EntityMeshes.Empty();
 	EntityClassCount.clear();
 	
-	for (int i = 1; i < NativeMap->solidEntities.size()-1;i++)
+	for (int i = 1; i < NativeMap->GetSolidEntities().size()-1;i++)
 	{
-		EntityMeshes.Emplace(ConvertEntityToModel(NativeMap->solidEntities[i]));
+		EntityMeshes.Emplace(ConvertEntityToModel(NativeMap->GetSolidEntities()[i]));
 	}
-}
-
-void UQuakeMapAsset::RemoveOnUpdatedCallback(int id)
-{
-	for (int i = 0; i < onUpdatedCallbacks.size(); i++)
-	{
-		if (onUpdatedCallbacks[i].first == id)
-		{
-			onUpdatedCallbacks.erase(onUpdatedCallbacks.begin()+i);
-		}
-	}
-}
-
-int UQuakeMapAsset::RegisterOnUpdatedCallback(std::function<void()> cb)
-{
-	int id = onUpdateCallbackIDSeed++;
-	onUpdatedCallbacks.push_back({id,cb});
-	return onUpdateCallbackIDSeed++;
 }
 
 FString UQuakeMapAsset::GetClassName(int idx) const
 {
 	idx++;
-	if ( idx >= NativeMap->solidEntities.size() || idx < 0) return "none";
-	if (NativeMap->solidEntities[idx].entityRef == nullptr) return "none";
-	auto ClassName = NativeMap->solidEntities[idx].entityRef->classname.c_str();
+	if ( idx >= NativeMap->GetSolidEntities().size() || idx < 0) return "none";
+	if (NativeMap->GetSolidEntities()[idx].entityRef == nullptr) return "none";
+	auto ClassName = NativeMap->GetSolidEntities()[idx].entityRef->classname.c_str();
 	return FString(ClassName);
 }
 
@@ -121,27 +115,24 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 	FAssetRegistryModule::AssetCreated(Mesh);
 	Pkg->FullyLoad();
 
-	UMaterial* BaseMaterial = (UMaterial*)StaticLoadObject(UMaterial::StaticClass(), NULL, TEXT("/QUnreal/Materials/M_WadMaster"), NULL, LOAD_None, NULL);
 	FVector3f EmptyVector = FVector3f(0, 0, 0);
 	FColor WhiteVertex = FColor(255, 255, 255, 255);
 	FRawMesh rawMesh;
 
-	for (auto m : Materials)
-	{
-		Mesh->AddMaterial(m);
-	}
 	
-	int offset_idx = 0;
+	int offset_idx = 0, material_idx = 0;
+	TMap<int32_t, int32_t> MatIDMap;
 	
 	for (const auto &b : Entity.geoBrushes)
 	{
 		for (const auto p : b.polygons)
 		{
-			//
+			if (p->vertices.size() == 0 || p->noDraw) continue;
+			
 			for (int i = p->vertices.size()-1; i >= 0 ; i--)
 			{
 				const auto &pt = p->vertices[i];
-				rawMesh.VertexPositions.Add(FVector3f(-pt.point.x,pt.point.y,pt.point.z));
+				rawMesh.VertexPositions.Add(FVector3f(-pt.point[0],pt.point[1],pt.point[2]));
 			}
 
 			for (int i = 0; i < p->indices.size()-2; i+= 3)
@@ -159,9 +150,9 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 				rawMesh.WedgeColors.Add(WhiteVertex);
 				rawMesh.WedgeColors.Add(WhiteVertex);
 
-				rawMesh.WedgeTexCoords[0].Add(FVector2f(pt.uv.x, pt.uv.y));
-				rawMesh.WedgeTexCoords[0].Add(FVector2f(pt2.uv.x, pt2.uv.y));
-				rawMesh.WedgeTexCoords[0].Add(FVector2f(pt3.uv.x, pt3.uv.y));
+				rawMesh.WedgeTexCoords[0].Add(FVector2f(pt.uv[0], pt.uv[1]));
+				rawMesh.WedgeTexCoords[0].Add(FVector2f(pt2.uv[0], pt2.uv[1]));
+				rawMesh.WedgeTexCoords[0].Add(FVector2f(pt3.uv[0], pt3.uv[1]));
 
 				rawMesh.WedgeTangentX.Add(EmptyVector);
 				rawMesh.WedgeTangentX.Add(EmptyVector);
@@ -171,16 +162,25 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 				rawMesh.WedgeTangentY.Add(EmptyVector);
 				rawMesh.WedgeTangentY.Add(EmptyVector);
 
-				rawMesh.WedgeTangentZ.Add(FVector3f(pt.normal.x, pt.normal.y,pt.normal.z));
-				rawMesh.WedgeTangentZ.Add(FVector3f(pt2.normal.x, pt2.normal.y,pt2.normal.z));
-				rawMesh.WedgeTangentZ.Add(FVector3f(pt3.normal.x, pt3.normal.y,pt3.normal.z));
-				
-				rawMesh.FaceMaterialIndices.Add(p->faceRef.textureID);
+				rawMesh.WedgeTangentZ.Add(FVector3f(pt.normal[0], pt.normal[1],pt.normal[2]));
+				rawMesh.WedgeTangentZ.Add(FVector3f(pt2.normal[0], pt2.normal[1],pt2.normal[2]));
+				rawMesh.WedgeTangentZ.Add(FVector3f(pt3.normal[0], pt3.normal[1],pt3.normal[2]));
+
+				if (!MatIDMap.Contains(p->faceRef.textureID))
+				{
+					Mesh->AddMaterial(Materials[p->faceRef.textureID]);
+					MatIDMap.Add(p->faceRef.textureID,material_idx++);
+				}
+				rawMesh.FaceMaterialIndices.Add(MatIDMap[p->faceRef.textureID]);
 				rawMesh.FaceSmoothingMasks.Add(0);
 			}
+			
 			offset_idx += p->vertices.size();
 		}
 	}
+
+	
+	rawMesh.CompactMaterialIndices();
 	
 	Mesh->AddSourceModel();
 	auto &SrcModel = Mesh->GetSourceModel(0);
@@ -195,7 +195,12 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 	Mesh->PostEditChange();
 	Mesh->ImportVersion = EImportStaticMeshVersion::LastVersion;
 	Mesh->SetLightingGuid();
+	Mesh->bCustomizedCollision = false;
+	
+	
 	Mesh->Build(false);
+	Mesh->ComplexCollisionMesh = Mesh;
+	
 
 	FSavePackageArgs Args;
 	Args.TopLevelFlags = RF_Public | RF_Standalone;

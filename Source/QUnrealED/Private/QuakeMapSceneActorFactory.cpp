@@ -77,6 +77,7 @@ AActor* UQuakeMapSceneActorFactory::SpawnActor(UObject* InAsset, ULevel* InLevel
 		EntityActor->ClassName = actor->QuakeMapAsset->GetClassName(i);
 		EntityActor->EntityMeshReference = EntityMesh;
 		EntityActor->EntityMeshComponent->SetStaticMesh(EntityMesh);
+		EntityActor->Setup();
 		
 		EntityActor->AttachToActor(actor, FAttachmentTransformRules::KeepWorldTransform);
 		actor->SolidEntities.Emplace(EntityActor);

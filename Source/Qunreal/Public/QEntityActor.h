@@ -24,5 +24,5 @@ public:
 	UPROPERTY()
 	FString ClassName;
 	virtual void OnConstruction(const FTransform& Transform) override;
-	
+	virtual void Setup();
 };

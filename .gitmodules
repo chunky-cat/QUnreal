@@ -1,0 +1,3 @@
+[submodule "Source/Qunreal/qformats"]
+	path = Source/Qunreal/qformats
+	url = https://github.com/chunky-cat/qformats

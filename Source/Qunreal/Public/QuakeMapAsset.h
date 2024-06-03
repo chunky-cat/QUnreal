@@ -12,8 +12,6 @@ class QUNREAL_API UQuakeMapAsset : public UObject, public IInterface_AssetUserDa
 
 public:
 	void LoadMapFromFile(FString fileName);
-	int RegisterOnUpdatedCallback(std::function<void()>);
-	void RemoveOnUpdatedCallback(int id);
 public:
 	UPROPERTY(VisibleAnywhere) UStaticMesh *WorldSpawnMesh;
 	UPROPERTY(VisibleAnywhere) TArray<UStaticMesh*> EntityMeshes;
@@ -38,8 +36,6 @@ private:
 	UStaticMesh* ConvertEntityToModel(const qformats::map::SolidEntity &ent);
 	FString GetUniqueEntityName(qformats::map::QEntity *Ent);
 
-	std::vector<std::pair<int,std::function<void()>>> onUpdatedCallbacks;
-	int onUpdateCallbackIDSeed = 0;
 	qformats::map::QMap* NativeMap;
 	qformats::textures::ITexture *onTextureRequest(std::string name, UMaterial* BaseMaterial);
 	std::map<std::string, int> EntityClassCount;
