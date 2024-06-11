@@ -16,6 +16,7 @@ public:
 	UPROPERTY(VisibleAnywhere) UStaticMesh *WorldSpawnMesh;
 	UPROPERTY(VisibleAnywhere) TArray<UStaticMesh*> EntityMeshes;
 	UPROPERTY(VisibleAnywhere) FString SourceQMapFile;
+	UPROPERTY(VisibleAnywhere) FName TestText;
 	UPROPERTY(VisibleAnywhere) TArray<UMaterialInstanceDynamic*> Materials;
 public:
 	FString GetClassName(int idx) const;
@@ -33,10 +34,9 @@ public:
 #endif
 
 private:
-	UStaticMesh* ConvertEntityToModel(const qformats::map::SolidEntity &ent);
-	FString GetUniqueEntityName(qformats::map::QEntity *Ent);
-
-	qformats::map::QMap* NativeMap;
+	UStaticMesh* ConvertEntityToModel(const qformats::map::SolidEntityPtr &ent, int LMSize);
+	FString GetUniqueEntityName(qformats::map::BaseEntity *Ent);
+	TArray<FString> EntityClassNames; 
 	qformats::textures::ITexture *onTextureRequest(std::string name, UMaterial* BaseMaterial);
 	std::map<std::string, int> EntityClassCount;
 };

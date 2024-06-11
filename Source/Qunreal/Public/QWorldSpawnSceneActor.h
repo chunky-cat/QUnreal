@@ -14,7 +14,7 @@ public:
 	
 public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuakeMapAsset")
-	UQuakeMapAsset* QuakeMapAsset;
+	TWeakObjectPtr<UQuakeMapAsset> QuakeMapAsset;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quake Entities")
 	TArray<AQEntitySceneActor*> SolidEntities;

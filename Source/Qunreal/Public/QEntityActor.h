@@ -13,7 +13,7 @@ public:
 
 public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuakeMapAsset")
-	UQuakeMapAsset* QuakeMapAsset;
+	TWeakObjectPtr<UQuakeMapAsset> QuakeMapAsset;
 
 	UPROPERTY()
 	UStaticMesh* EntityMeshReference;
