@@ -7,7 +7,6 @@ UQuakeWadAsset::~UQuakeWadAsset()
 {
 	//object->MarkPendingKill(); <-- this way we can kill stuff
 	FWadManager::GetInstance()->RemoveWad(this);
-	
 }
 
 void UQuakeWadAsset::LoadWadFromFile(FString FileName)

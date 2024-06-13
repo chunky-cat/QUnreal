@@ -99,5 +99,6 @@ EReimportResult::Type UQuakeMapAssetFactory::Reimport(UObject* Obj)
 	auto ReimportMap = static_cast<UQuakeMapAsset*>(Obj);
 	ReimportMap->LoadMapFromFile(ReimportMap->SourceQMapFile);
 	GEditor->GetEditorSubsystem<UImportSubsystem>()->BroadcastAssetReimport(ReimportMap);
+	ReimportMap->QuakeMapUpdated.Broadcast();
 	return EReimportResult::Succeeded;
 }

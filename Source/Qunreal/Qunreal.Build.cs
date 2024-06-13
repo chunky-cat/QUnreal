@@ -4,7 +4,6 @@ using UnrealBuildTool;
 
 public class QUnreal : ModuleRules
 {
-	
 	private string ThirdPartyPath()
 	{
 		return Path.Combine(ModuleDirectory, "..", "..", "ThirdParty");
@@ -59,7 +58,8 @@ public class QUnreal : ModuleRules
 				"Slate",
 				"SlateCore",
 				"RawMesh",
-				"UMG"
+				"UMG", 
+				"UnrealEd"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

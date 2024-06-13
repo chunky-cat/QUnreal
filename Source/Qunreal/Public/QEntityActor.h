@@ -4,25 +4,32 @@
 #include "QuakeMapAsset.h"
 #include "QEntityActor.generated.h"
 
+
+USTRUCT()
+struct QUNREAL_API FQEntityProperty
+{
+	GENERATED_BODY()
+	UPROPERTY(VisibleAnywhere) FString Key;
+	UPROPERTY(VisibleAnywhere) FString Value;
+	
+};
+
 UCLASS()
-class QUNREAL_API AQEntitySceneActor : public AActor
+class QUNREAL_API AQEntityActor : public AActor
 {
 	GENERATED_BODY()
 public:
-	AQEntitySceneActor();
+	AQEntityActor();
 
 public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuakeMapAsset")
-	TWeakObjectPtr<UQuakeMapAsset> QuakeMapAsset;
+	UQuakeMapAsset *QuakeMapAsset;
 
-	UPROPERTY()
-	UStaticMesh* EntityMeshReference;
-	UPROPERTY()
-	UStaticMeshComponent* EntityMeshComponent;
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	FName EntityName;
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
 	FString ClassName;
-	virtual void OnConstruction(const FTransform& Transform) override;
+	UPROPERTY(VisibleAnywhere)
+	TMap<FString,FString> Properties;
 	virtual void Setup();
 };
