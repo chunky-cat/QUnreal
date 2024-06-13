@@ -69,7 +69,7 @@ public:
 	FName MaterialOverrideFolder = "";
 	
 	UPROPERTY(EditAnywhere)
-	bool bImportLights = true;
+	bool bImportLights = false;
 	
 	UPROPERTY(VisibleAnywhere) UStaticMesh *WorldSpawnMesh;
 	UPROPERTY(EditAnywhere, meta = (TitleProperty = "UniqueClassName"))
