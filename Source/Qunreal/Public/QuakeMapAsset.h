@@ -60,13 +60,22 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	float LightMapDivider = 2600;
-
 	
 	UPROPERTY(EditAnywhere)
 	FName TextureFolder = "";
 
 	UPROPERTY(EditAnywhere)
 	FName MaterialOverrideFolder = "";
+
+	UPROPERTY(EditAnywhere)
+	FString SkipTexture = "skip";
+
+	UPROPERTY(EditAnywhere)
+	FString ClipTexture = "clip";
+
+	UPROPERTY(EditAnywhere)
+	FString SkyTexture = "sky";
+	
 	
 	UPROPERTY(EditAnywhere)
 	bool bImportLights = false;

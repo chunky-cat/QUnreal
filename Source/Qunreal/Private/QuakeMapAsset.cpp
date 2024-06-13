@@ -74,12 +74,22 @@ void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 																		   LOAD_None, nullptr));
 	}
 
-	
-	NativeMap->ExcludeTextureSurface("SKY1");
-	NativeMap->ExcludeTextureSurface("CLIP");
-	NativeMap->ExcludeTextureSurface("SKIP");
-	NativeMap->ExcludeTextureSurface("clip");
-	NativeMap->ExcludeTextureSurface("skip");
+
+	if (SkipTexture != "")
+	{
+		NativeMap->ExcludeTextureSurface(TCHAR_TO_UTF8(*SkipTexture));
+		NativeMap->ExcludeTextureSurface(TCHAR_TO_UTF8(*SkipTexture.ToUpper()));	
+	}
+	if (ClipTexture != "")
+	{
+		NativeMap->ExcludeTextureSurface(TCHAR_TO_UTF8(*ClipTexture));
+		NativeMap->ExcludeTextureSurface(TCHAR_TO_UTF8(*ClipTexture.ToUpper()));
+	}
+	if (SkyTexture != "")
+	{
+		NativeMap->ExcludeTextureSurface(TCHAR_TO_UTF8(*SkyTexture));
+		NativeMap->ExcludeTextureSurface(TCHAR_TO_UTF8(*SkyTexture.ToUpper()));
+	}
 
 	NativeMap->GenerateGeometry();
 
