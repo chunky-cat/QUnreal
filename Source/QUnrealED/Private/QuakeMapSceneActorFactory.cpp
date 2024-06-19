@@ -1,7 +1,7 @@
 #include "QuakeMapSceneActorFactory.h"
-#include <QuakeMapAsset.h>
+#include <Assets/QuakeMapAsset.h>
 
-#include "QWorldSpawnActor.h"
+#include "Entities/QWorldSpawnActor.h"
 #include "PhysicsEngine/BodySetup.h"
 
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <CoreMinimal.h>
-#include "QuakeMapAsset.h"
+#include "Assets/QuakeMapAsset.h"
 #include "QEntityActor.generated.h"
 
 

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Entities/QEntityClassesData.h"
 #include "Modules/ModuleManager.h"
 
 class FQUnrealModule : public IModuleInterface

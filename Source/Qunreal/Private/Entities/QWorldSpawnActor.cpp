@@ -1,12 +1,13 @@
-#include "QWorldSpawnActor.h"
+#include "Entities/QWorldSpawnActor.h"
+#include "Entities/QSolidEntityActor.h"
 
-#include "QSolidEntityActor.h"
 #include "PhysicsEngine/BodySetup.h"
 
 // Sets default values
 AQWorldSpawnActor::AQWorldSpawnActor()
 {
 	WorldSpawnMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WorldSpawnMesh"));
+	RootComponent = WorldSpawnMeshComponent;
     PrimaryActorTick.bCanEverTick = false;
 }
 
@@ -88,10 +89,9 @@ void AQWorldSpawnActor::ReloadFromAsset()
 		EntityActor->EntityName = (*MeshStr);
 		EntityActor->ClassName = Entity.ClassName;
 		EntityActor->EntityMeshComponent->SetStaticMesh(Entity.Mesh);
-		
-		EntityActor->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
 		EntityActor->Setup();
-		EntityActor->SetPivotOffset(Entity.Center/QuakeMapAsset->InverseScale);
+		EntityActor->SetPivotOffset(Entity.Center);
+		EntityActor->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
 		SolidEntities.Emplace(EntityActor);
 	}
 

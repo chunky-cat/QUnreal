@@ -59,7 +59,7 @@ public class QUnreal : ModuleRules
 				"SlateCore",
 				"RawMesh",
 				"UMG", 
-				"UnrealEd"
+				"UnrealEd",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

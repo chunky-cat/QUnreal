@@ -1,4 +1,4 @@
-#include "QSolidEntityActor.h"
+#include "Entities/QSolidEntityActor.h"
 #include "PhysicsEngine/BodySetup.h"
 
 AQSolidEntityActor::AQSolidEntityActor()

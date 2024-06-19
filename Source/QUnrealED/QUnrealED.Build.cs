@@ -25,7 +25,7 @@ public class QUnrealED : ModuleRules
                 "AssetTools",
                 "QUnreal",
                 "UnrealEd",
-                "USDUtilities"
+                "DeveloperSettings"
             }
         );
         

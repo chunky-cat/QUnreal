@@ -1,5 +1,4 @@
-#include "QEntityActor.h"
-#include "PhysicsEngine/BodySetup.h"
+#include "Entities/QEntityActor.h"
 
 AQEntityActor::AQEntityActor(): QuakeMapAsset(nullptr)
 {
@@ -8,4 +7,5 @@ AQEntityActor::AQEntityActor(): QuakeMapAsset(nullptr)
 
 void AQEntityActor::Setup()
 {
+	
 }

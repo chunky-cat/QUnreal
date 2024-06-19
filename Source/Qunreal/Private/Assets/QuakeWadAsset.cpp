@@ -1,5 +1,5 @@
-#include "QuakeWadAsset.h"
-#include "AssetHelper.h"
+#include "Assets/QuakeWadAsset.h"
+#include "Assets/AssetHelper.h"
 
 UQuakeWadAsset::UQuakeWadAsset() {}
 

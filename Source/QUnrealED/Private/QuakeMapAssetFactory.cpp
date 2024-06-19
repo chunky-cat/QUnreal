@@ -1,9 +1,8 @@
 #include "QuakeMapAssetFactory.h"
 
 #include "FileHelpers.h"
-#include "QuakeMapAsset.h"
-#include "USDAssetImportData.h"
-#include "USDConversionUtils.h"
+#include "QUnrealSettings.h"
+#include "Assets/QuakeMapAsset.h"
 #include "EditorFramework/AssetImportData.h"
 
 UClass* FQMapAssetTypeAction::GetSupportedClass() const
@@ -48,7 +47,7 @@ void FQMapAssetTypeAction::GetResolvedSourceFilePaths(const TArray<UObject*>& Ty
 
 UQuakeMapAssetFactory::UQuakeMapAssetFactory(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	Formats.Add("map;MAP;Quake Map FIle");
+	Formats.Add("map;Quake Map FIle");
 	SupportedClass = UQuakeMapAsset::StaticClass();
 	
 	bCreateNew = false;
@@ -62,6 +61,18 @@ UObject* UQuakeMapAssetFactory::FactoryCreateFile(UClass* InClass, UObject* InPa
 {
 	UQuakeMapAsset* newMapObj = NewObject<UQuakeMapAsset>(InParent, InClass, InName, Flags);
 	newMapObj->SourceQMapFile = Filename;
+	UQUnrealSettings* Settings = GetMutableDefault<UQUnrealSettings>();
+
+	newMapObj->bImportLights = Settings->bImportLights;
+	newMapObj->InverseScale = Settings->InverseScale;
+	newMapObj->ClipTexture = Settings->ClipTexture;
+	newMapObj->SkyTexture = Settings->SkyTexture;
+	newMapObj->SkipTexture = Settings->SkipTexture;
+	newMapObj->EntityClassOverrides = Settings->DefaultEntityClasses;
+	newMapObj->TextureFolder = Settings->TextureFolder;
+	newMapObj->MaterialOverrideFolder = Settings->MaterialFolder;
+	
+	
 	newMapObj->LoadMapFromFile(Filename);
 	newMapObj->PostEditChange();
 
@@ -100,5 +111,7 @@ EReimportResult::Type UQuakeMapAssetFactory::Reimport(UObject* Obj)
 	ReimportMap->LoadMapFromFile(ReimportMap->SourceQMapFile);
 	GEditor->GetEditorSubsystem<UImportSubsystem>()->BroadcastAssetReimport(ReimportMap);
 	ReimportMap->QuakeMapUpdated.Broadcast();
+	Obj->Modify(true);
+	Obj->GetPackage()->MarkAsReachable();
 	return EReimportResult::Succeeded;
 }

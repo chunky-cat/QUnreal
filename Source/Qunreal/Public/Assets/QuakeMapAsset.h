@@ -4,7 +4,7 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include <qformats/map/map.h>
 
-#include "QEntityClassesData.h"
+#include "Entities/QEntityClassesData.h"
 #include "QuakeMapAsset.generated.h"
 
 UENUM()
@@ -47,7 +47,7 @@ public:
 	void LoadMapFromFile(FString fileName);
 public:
 	UPROPERTY(EditAnywhere)
-	UQEntityClassesData *EntityClassOverrides;
+	TSoftObjectPtr<UQEntityClassesData> EntityClassOverrides;
 
 	UPROPERTY(EditAnywhere)
 	UMaterial *BaseMaterial;
@@ -106,13 +106,15 @@ public:
 #endif
 
 private:
+	void Reset();
 	UStaticMesh* ConvertEntityToModel(const qformats::map::SolidEntityPtr &ent, FVector3d &OutCenter);
 	FString GetUniqueEntityName(qformats::map::BaseEntity *Ent);
+	static void MarkTexture(qformats::map::QMap *NativeMap, const FString &TextureName, qformats::map::Face::eFaceType t);
 	void FillCacheFromTextures(qformats::map::QMap* NativeMap);
 	qformats::textures::ITexture *onTextureRequest(std::string name);
 	std::map<std::string, int> EntityClassCount;
+	
 	TMap<FString, TWeakObjectPtr<UTexture2D>> TextureCache;
 	TMap<FString, TWeakObjectPtr<UMaterial>> MaterialOverrideCache;
-	
 	FAssetRegistryModule &AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));;
 };

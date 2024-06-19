@@ -1,7 +1,7 @@
 #include "QuakeWadAssetFactory.h"
 
 #include "FileHelpers.h"
-#include "QuakeWadAsset.h"
+#include "Assets/QuakeWadAsset.h"
 
 UClass* FQWadAssetTypeAction::GetSupportedClass() const
 {
@@ -20,7 +20,7 @@ FColor FQWadAssetTypeAction::GetTypeColor() const
  
 uint32 FQWadAssetTypeAction::GetCategories()
 {
-	return EAssetTypeCategories::None;
+	return EAssetTypeCategories::Misc;
 }
 
 UQuakeWadAssetFactory::UQuakeWadAssetFactory()

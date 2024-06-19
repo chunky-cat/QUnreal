@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "QuakeMapAssetFactory.h"
+#include "QuakeWadAssetFactory.h"
 
 #include "Modules/ModuleManager.h"
 
@@ -12,10 +13,7 @@ public:
     virtual void StartupModule() override;
     virtual void ShutdownModule() override;
 
-    virtual bool SupportsDynamicReloading() override
-    {
-        return true;
-    }
 private:
     TSharedPtr<FQMapAssetTypeAction> FQMapAssetTypeActions;
+    TSharedPtr<FQWadAssetTypeAction> FQWadAssetTypeActions;
 };

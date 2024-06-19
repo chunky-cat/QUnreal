@@ -1,6 +1,6 @@
 #pragma once
 #include "QEntityActor.h"
-#include "QuakeMapAsset.h"
+#include "Assets/QuakeMapAsset.h"
 
 #include "Engine/PointLight.h"
 #include "QWorldSpawnActor.generated.h"
