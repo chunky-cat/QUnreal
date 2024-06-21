@@ -8,13 +8,13 @@
 
 
 UCLASS(Config=Editor, defaultconfig, meta = (DisplayName="QUnreal"))
-class QUNREAL_API UQUnrealSettings : public UDeveloperSettings
+class QUNREALED_API UQUnrealSettings : public UDeveloperSettings
 {
 	GENERATED_BODY()
 
 public:
-
-	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "General")
+	UQUnrealSettings() {};
+ 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "General")
 	float InverseScale = 1.0;
 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Textures")
 	FName TextureFolder = "/Game/Textures";

@@ -97,6 +97,8 @@ void UQuakeMapAssetFactory::SetReimportPaths(UObject* Obj, const TArray<FString>
 	if (ReimportMap != nullptr)
 	{
 		ReimportMap->SourceQMapFile = NewReimportPaths[0];
+		ReimportMap->Modify();
+		ReimportMap->AssetImportData->Update(NewReimportPaths[0]);
 	}
 }
 
@@ -108,10 +110,17 @@ int32 UQuakeMapAssetFactory::GetPriority() const
 EReimportResult::Type UQuakeMapAssetFactory::Reimport(UObject* Obj)
 {
 	auto ReimportMap = static_cast<UQuakeMapAsset*>(Obj);
-	ReimportMap->LoadMapFromFile(ReimportMap->SourceQMapFile);
-	GEditor->GetEditorSubsystem<UImportSubsystem>()->BroadcastAssetReimport(ReimportMap);
-	ReimportMap->QuakeMapUpdated.Broadcast();
-	Obj->Modify(true);
-	Obj->GetPackage()->MarkAsReachable();
+	//ReimportMap->LoadMapFromFile(ReimportMap->SourceQMapFile);
+	//GEditor->GetEditorSubsystem<UImportSubsystem>()->BroadcastAssetReimport(ReimportMap);
+	const FString Filename = ReimportMap->AssetImportData->GetFirstFilename();
+	const FString FileExtension = FPaths::GetExtension(Filename);
+	if( UFactory::StaticImportObject( ReimportMap->GetClass(), ReimportMap->GetOuter(), *ReimportMap->GetName(), RF_Public|RF_Standalone, *Filename, nullptr, this ) )
+	{
+		// Mark the package dirty after the successful import
+		ReimportMap->MarkPackageDirty();
+		ReimportMap->QuakeMapUpdated.Broadcast();
+		return EReimportResult::Succeeded;
+	}
+	
 	return EReimportResult::Succeeded;
 }
