@@ -98,7 +98,7 @@ void AQWorldSpawnActor::ReloadFromAsset()
 	for (int i = 0;  i < QuakeMapAsset->PointEntities.Num(); i++)
 	{
 		auto Entity = QuakeMapAsset->PointEntities[i];
-		if (Entity.ClassName == "light" && QuakeMapAsset->bImportLights)
+		if (Entity.ClassName == "light" && QuakeMapAsset->Options.bImportLights)
 		{
 			ImportLightFromMap(Entity);
 		}
@@ -131,7 +131,7 @@ void AQWorldSpawnActor::ImportLightFromMap(const FEntity& LightEntity)
 	p.Owner = this;
 
 	auto Trans = LightEntity.Origin + GetTransform().GetLocation();
-	Trans /= QuakeMapAsset->InverseScale;
+	Trans /= QuakeMapAsset->Options.InverseScale;
 	auto PtLight = GetWorld()->SpawnActor<APointLight>(APointLight::StaticClass(),FTransform3d(Trans),p);
 		
 	float Brightness = 300;
@@ -140,7 +140,7 @@ void AQWorldSpawnActor::ImportLightFromMap(const FEntity& LightEntity)
 		Brightness = FCString::Atof(*LightEntity.Properties["light"]);
 	}
 
-	Brightness = Brightness/QuakeMapAsset->InverseScale;
+	Brightness = Brightness/QuakeMapAsset->Options.InverseScale;
 	PtLight->SetRadius(Brightness*6);
 	PtLight->SetBrightness(Brightness*0.7);
 	FActorLabelUtilities::SetActorLabelUnique(PtLight, MeshStr);

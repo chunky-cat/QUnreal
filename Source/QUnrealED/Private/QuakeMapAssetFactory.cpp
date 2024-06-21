@@ -61,18 +61,6 @@ UObject* UQuakeMapAssetFactory::FactoryCreateFile(UClass* InClass, UObject* InPa
 {
 	UQuakeMapAsset* newMapObj = NewObject<UQuakeMapAsset>(InParent, InClass, InName, Flags);
 	newMapObj->SourceQMapFile = Filename;
-	UQUnrealSettings* Settings = GetMutableDefault<UQUnrealSettings>();
-
-	newMapObj->bImportLights = Settings->bImportLights;
-	newMapObj->InverseScale = Settings->InverseScale;
-	newMapObj->ClipTexture = Settings->ClipTexture;
-	newMapObj->SkyTexture = Settings->SkyTexture;
-	newMapObj->SkipTexture = Settings->SkipTexture;
-	newMapObj->EntityClassOverrides = Settings->DefaultEntityClasses;
-	newMapObj->TextureFolder = Settings->TextureFolder;
-	newMapObj->MaterialOverrideFolder = Settings->MaterialFolder;
-	
-	
 	newMapObj->LoadMapFromFile(Filename);
 	newMapObj->PostEditChange();
 
@@ -112,15 +100,15 @@ EReimportResult::Type UQuakeMapAssetFactory::Reimport(UObject* Obj)
 	auto ReimportMap = static_cast<UQuakeMapAsset*>(Obj);
 	//ReimportMap->LoadMapFromFile(ReimportMap->SourceQMapFile);
 	//GEditor->GetEditorSubsystem<UImportSubsystem>()->BroadcastAssetReimport(ReimportMap);
-	const FString Filename = ReimportMap->AssetImportData->GetFirstFilename();
-	const FString FileExtension = FPaths::GetExtension(Filename);
-	if( UFactory::StaticImportObject( ReimportMap->GetClass(), ReimportMap->GetOuter(), *ReimportMap->GetName(), RF_Public|RF_Standalone, *Filename, nullptr, this ) )
-	{
-		// Mark the package dirty after the successful import
-		ReimportMap->MarkPackageDirty();
-		ReimportMap->QuakeMapUpdated.Broadcast();
-		return EReimportResult::Succeeded;
-	}
+	//const FString Filename = ReimportMap->AssetImportData->GetFirstFilename();
+	//const FString FileExtension = FPaths::GetExtension(Filename);
+
+	ReimportMap->LoadMapFromFile(ReimportMap->SourceQMapFile);
+	// Mark the package dirty after the successful import
+	ReimportMap->MarkPackageDirty();
+	ReimportMap->QuakeMapUpdated.Broadcast();
+	return EReimportResult::Succeeded;
+	
 	
 	return EReimportResult::Succeeded;
 }

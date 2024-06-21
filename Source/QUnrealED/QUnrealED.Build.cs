@@ -24,11 +24,11 @@ public class QUnrealED : ModuleRules
                 "SlateCore",
                 "AssetTools",
                 "QUnreal",
-                "UnrealEd",
-                "DeveloperSettings"
+                "UnrealEd"
             }
         );
         
+        CppStandard = CppStandardVersion.Cpp20;
 
     }
 }

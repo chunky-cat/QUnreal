@@ -4,6 +4,7 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include <qformats/map/map.h>
 
+#include "QUnrealSettings.h"
 #include "Entities/QEntityClassesData.h"
 #include "QuakeMapAsset.generated.h"
 
@@ -37,7 +38,6 @@ struct FSolidEntity : public FEntity
 	UPROPERTY(VisibleAnywhere) FVector3d Center;
 };
 
-
 UCLASS()
 class QUNREAL_API UQuakeMapAsset : public UObject, public IInterface_AssetUserData
 {
@@ -47,38 +47,10 @@ public:
 	void LoadMapFromFile(FString fileName);
 public:
 	UPROPERTY(EditAnywhere)
-	TSoftObjectPtr<UQEntityClassesData> EntityClassOverrides;
-
-	UPROPERTY(EditAnywhere)
-	UMaterial *BaseMaterial;
-	
-	UPROPERTY(EditAnywhere)
-	float InverseScale = 1;
-
-	UPROPERTY(EditAnywhere)
-	float MaxLightmapSize = 512;
-
-	UPROPERTY(EditAnywhere)
-	float LightMapDivider = 2600;
-	
-	UPROPERTY(EditAnywhere)
-	FName TextureFolder = "";
-
-	UPROPERTY(EditAnywhere)
-	FName MaterialOverrideFolder = "";
-
-	UPROPERTY(EditAnywhere)
-	FString SkipTexture = "skip";
-
-	UPROPERTY(EditAnywhere)
-	FString ClipTexture = "clip";
-
-	UPROPERTY(EditAnywhere)
-	FString SkyTexture = "sky";
-	
-	
-	UPROPERTY(EditAnywhere)
-	bool bImportLights = false;
+	bool bOverrideDefaultOptions = false;
+	// Can only edit this property if "Has Flowers" is true
+	UPROPERTY(EditAnywhere, DisplayName="Import Options", meta = (EditCondition = "bOverrideDefaultOptions"))
+	FQuakeMapAssetOptions Options;
 	
 	UPROPERTY(VisibleAnywhere) UStaticMesh *WorldSpawnMesh;
 	UPROPERTY(EditAnywhere, meta = (TitleProperty = "UniqueClassName"))

@@ -9,7 +9,7 @@
 qformats::textures::ITexture* UQuakeMapAsset::onTextureRequest(std::string name)
 {
 	UTexture2D* texture = nullptr;
-	UMaterial* Material = BaseMaterial;
+	UMaterial* Material = Options.BaseMaterial;
 
 	if (MaterialOverrideCache.Contains(name.c_str()))
 	{
@@ -52,14 +52,14 @@ inline void CreateEntityFromNative(FEntity* InEnt, qformats::map::BaseEntityPtr 
 
 void UQuakeMapAsset::Reset()
 {
-	if (LightMapDivider == 0)
+	if (Options.LightMapDivider == 0)
 	{
-		LightMapDivider = 1024;
+		Options.LightMapDivider = 1024;
 	}
 
-	if (InverseScale == 0)
+	if (Options.InverseScale == 0)
 	{
-		InverseScale = 1;
+		Options.InverseScale = 1;
 	}
 
 	TextureCache.Empty();
@@ -72,27 +72,33 @@ void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 	auto NativeMap = new qformats::map::QMap();
 	NativeMap->LoadFile(std::string(TCHAR_TO_UTF8(*fileName)));
 
+	if (!bOverrideDefaultOptions)
+	{
+		const UQUnrealSettings* Settings = GetDefault<UQUnrealSettings>();
+		Options = Settings->MapAssetOptions;
+	}
+
 	if (NativeMap == nullptr)
 	{
 		return;
 	}
 
-	if (!BaseMaterial->IsValidLowLevel())
+	if (!Options.BaseMaterial->IsValidLowLevel())
 	{
-		BaseMaterial = static_cast<UMaterial*>(StaticLoadObject(UMaterial::StaticClass(), nullptr,
-																		   TEXT("/QUnreal/Materials/M_WadMaster"), nullptr,
-																		   LOAD_None, nullptr));
+		Options.BaseMaterial = static_cast<UMaterial*>(StaticLoadObject(UMaterial::StaticClass(), nullptr,
+		                                                                TEXT("/QUnreal/Materials/M_WadMaster"), nullptr,
+		                                                                LOAD_None, nullptr));
 	}
 
-	MarkTexture(NativeMap, SkyTexture, qformats::map::Face::NODRAW);
-	MarkTexture(NativeMap, SkipTexture, qformats::map::Face::SKIP);
-	MarkTexture(NativeMap, ClipTexture, qformats::map::Face::CLIP);
+	MarkTexture(NativeMap, Options.SkyTexture, qformats::map::Face::NODRAW);
+	MarkTexture(NativeMap, Options.SkipTexture, qformats::map::Face::SKIP);
+	MarkTexture(NativeMap, Options.ClipTexture, qformats::map::Face::CLIP);
 
 	NativeMap->GenerateGeometry();
 	FWadManager::GetInstance()->Refresh();
 
 	FillCacheFromTextures(NativeMap);
-	
+
 	NativeMap->LoadTextures([this](std::string name) -> qformats::textures::ITexture* {
 		return this->onTextureRequest(name);
 	});
@@ -102,7 +108,7 @@ void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 
 
 	FVector3d Center{};
-	WorldSpawnMesh = ConvertEntityToModel(NativeMap->GetSolidEntities()[0],Center);
+	WorldSpawnMesh = ConvertEntityToModel(NativeMap->GetSolidEntities()[0], Center);
 	SolidEntities.Empty();
 	EntityClassCount.clear();
 
@@ -110,20 +116,21 @@ void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 	{
 		auto NativeSolidEntity = NativeMap->GetSolidEntities()[i];
 		FSolidEntity NewSolidEntity{};
-		CreateEntityFromNative(&NewSolidEntity, NativeSolidEntity, InverseScale);
-		auto EntityMesh = ConvertEntityToModel(NativeSolidEntity,Center);
+		CreateEntityFromNative(&NewSolidEntity, NativeSolidEntity, Options.InverseScale);
+		auto EntityMesh = ConvertEntityToModel(NativeSolidEntity, Center);
 		if (EntityMesh == nullptr)
 		{
 			continue;
 		}
-		NewSolidEntity.Center = Center / InverseScale;
+		NewSolidEntity.Center = Center / Options.InverseScale;
 		NewSolidEntity.Mesh = EntityMesh,
 			NewSolidEntity.UniqueClassName = FString(EntityMesh->GetName()),
 			NewSolidEntity.Type = EntityType_Solid;
 		NewSolidEntity.ClassTemplate = AQSolidEntityActor::StaticClass();
-		if (EntityClassOverrides != nullptr && EntityClassOverrides->Classes.Contains(NewSolidEntity.ClassName))
+		if (Options.EntityClassOverrides != nullptr && Options.EntityClassOverrides->Classes.Contains(
+			NewSolidEntity.ClassName))
 		{
-			NewSolidEntity.ClassTemplate = EntityClassOverrides->Classes[NewSolidEntity.ClassName];
+			NewSolidEntity.ClassTemplate = Options.EntityClassOverrides->Classes[NewSolidEntity.ClassName];
 		}
 
 		SolidEntities.Emplace(NewSolidEntity);
@@ -132,13 +139,14 @@ void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 	for (const auto& NativePointEntity : NativeMap->GetPointEntities())
 	{
 		FEntity NewPointEntity{};
-		CreateEntityFromNative(&NewPointEntity, NativePointEntity, InverseScale);
+		CreateEntityFromNative(&NewPointEntity, NativePointEntity, Options.InverseScale);
 		NewPointEntity.UniqueClassName = GetUniqueEntityName(NativePointEntity.get());
 		PointEntities.Emplace(NewPointEntity);
 		NewPointEntity.ClassTemplate = AQEntityActor::StaticClass();
-		if (EntityClassOverrides != nullptr && EntityClassOverrides->Classes.Contains(NewPointEntity.ClassName))
+		if (Options.EntityClassOverrides != nullptr && Options.EntityClassOverrides->Classes.Contains(
+			NewPointEntity.ClassName))
 		{
-			NewPointEntity.ClassTemplate = EntityClassOverrides->Classes[NewPointEntity.ClassName];
+			NewPointEntity.ClassTemplate = Options.EntityClassOverrides->Classes[NewPointEntity.ClassName];
 		}
 	}
 
@@ -159,47 +167,51 @@ void UQuakeMapAsset::PostEditChangeProperty(FPropertyChangedEvent& e)
 {
 	UObject::PostEditChangeProperty(e);
 
+	
+	
 	FName PropertyName = (e.Property != nullptr) ? e.Property->GetFName() : NAME_None;
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UQuakeMapAsset, EntityClassOverrides))
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UQuakeMapAsset, Options.EntityClassOverrides))
 	{
 		for (auto& PointEntity : PointEntities)
 		{
 			PointEntity.ClassTemplate = AQEntityActor::StaticClass();
-			if (EntityClassOverrides != nullptr && EntityClassOverrides->Classes.Contains(PointEntity.ClassName))
+			if (Options.EntityClassOverrides != nullptr && Options.EntityClassOverrides->Classes.Contains(
+				PointEntity.ClassName))
 			{
-				PointEntity.ClassTemplate = EntityClassOverrides->Classes[PointEntity.ClassName];
+				PointEntity.ClassTemplate = Options.EntityClassOverrides->Classes[PointEntity.ClassName];
 			}
 		}
 
 		for (auto& SolidEntity : SolidEntities)
 		{
 			SolidEntity.ClassTemplate = AQSolidEntityActor::StaticClass();
-			if (EntityClassOverrides != nullptr && EntityClassOverrides->Classes.Contains(SolidEntity.ClassName))
+			if (Options.EntityClassOverrides != nullptr && Options.EntityClassOverrides->Classes.Contains(
+				SolidEntity.ClassName))
 			{
-				SolidEntity.ClassTemplate = EntityClassOverrides->Classes[SolidEntity.ClassName];
+				SolidEntity.ClassTemplate = Options.EntityClassOverrides->Classes[SolidEntity.ClassName];
 			}
 		}
 
 		QuakeMapUpdated.Broadcast();
 	}
 
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UQuakeMapAsset, InverseScale))
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UQuakeMapAsset, Options.InverseScale))
 	{
 		LoadMapFromFile(SourceQMapFile);
 		QuakeMapUpdated.Broadcast();
 	}
 
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UQuakeMapAsset, TextureFolder))
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UQuakeMapAsset, Options.TextureFolder))
 	{
 		LoadMapFromFile(SourceQMapFile);
 	}
 
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UQuakeMapAsset, MaterialOverrideFolder))
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UQuakeMapAsset, Options.MaterialOverrideFolder))
 	{
 		LoadMapFromFile(SourceQMapFile);
 	}
 
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UQuakeMapAsset, bImportLights))
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UQuakeMapAsset, Options.bImportLights))
 	{
 		QuakeMapUpdated.Broadcast();
 	}
@@ -230,7 +242,7 @@ void UQuakeMapAsset::Serialize(FArchive& Ar)
 	UObject::Serialize(Ar);
 }
 
-UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEntityPtr& Entity, FVector3d &OutCenter)
+UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEntityPtr& Entity, FVector3d& OutCenter)
 {
 	FVector3f EmptyVector = FVector3f(0, 0, 0);
 	FColor WhiteVertex = FColor(255, 255, 255, 255);
@@ -239,13 +251,12 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 	int offset_idx = 0, material_idx = 0;
 	TMap<int32_t, int32_t> MatIDMap;
 	auto b0 = Entity.get()->GetClippedBrushes()[0];
-	FVector3d Min(b0.min.x(),b0.min.y(),b0.min.z());
-	FVector3d Max(b0.max.x(),b0.max.y(),b0.max.z());
+	FVector3d Min(b0.min.x(), b0.min.y(), b0.min.z());
+	FVector3d Max(b0.max.x(), b0.max.y(), b0.max.z());
 
-	
-	
+
 	double AreaEstimate = 0;
-	
+
 	for (const auto& b : Entity.get()->GetClippedBrushes())
 	{
 		for (const auto p : b.GetFaces())
@@ -262,9 +273,9 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 				const auto& pt = vertices[i];
 				rawMesh.VertexPositions.Add(FVector3f(
 					-pt.point[0],
-					pt.point[1] ,
+					pt.point[1],
 					pt.point[2]
-					) / InverseScale);
+				) / Options.InverseScale);
 			}
 
 			for (int i = 0; i < indices.size() - 2; i += 3)
@@ -325,12 +336,12 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 
 	rawMesh.CompactMaterialIndices();
 	auto entCenter = Entity->GetCenter();
-	OutCenter = FVector3d(-entCenter.x(),entCenter.y(),entCenter.z());
+	OutCenter = FVector3d(-entCenter.x(), entCenter.y(), entCenter.z());
 	auto MapName = FPaths::GetBaseFilename(SourceQMapFile);
 	FString MeshName = GetUniqueEntityName(Entity.get());
 	FString PackagePath = this->GetPackage()->GetPathName();
 	FString PackageFileName = FPackageName::LongPackageNameToFilename(PackagePath,
-																	  FPackageName::GetAssetPackageExtension());
+	                                                                  FPackageName::GetAssetPackageExtension());
 	UPackage* Pkg = CreatePackage(*PackagePath);
 	UStaticMesh* Mesh = NewObject<UStaticMesh>(Pkg, *MeshName, RF_Public | RF_Standalone | RF_MarkAsRootSet);
 	FAssetRegistryModule::AssetCreated(Mesh);
@@ -348,10 +359,10 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 	SrcModel.BuildSettings.bUseFullPrecisionUVs = true;
 	SrcModel.BuildSettings.bGenerateLightmapUVs = true;
 
-	auto LightMapEstimate = AreaEstimate / LightMapDivider;
-	if (LightMapEstimate > MaxLightmapSize)
+	auto LightMapEstimate = AreaEstimate / Options.LightMapDivider;
+	if (LightMapEstimate > Options.MaxLightmapSize)
 	{
-		LightMapEstimate = MaxLightmapSize;
+		LightMapEstimate = Options.MaxLightmapSize;
 	}
 
 	if (LightMapEstimate < 32)
@@ -362,7 +373,7 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 	SrcModel.BuildSettings.DstLightmapIndex = 0;
 	SrcModel.BuildSettings.DstLightmapIndex = 1;
 	SrcModel.BuildSettings.bComputeWeightedNormals = true;
-	
+
 	// Get LODGroup info
 	ITargetPlatformManagerModule& TargetPlatformManager = GetTargetPlatformManagerRef();
 	ITargetPlatform* RunningPlatform = TargetPlatformManager.GetRunningTargetPlatform();
@@ -406,30 +417,33 @@ FString UQuakeMapAsset::GetUniqueEntityName(qformats::map::BaseEntity* Ent)
 	return Name;
 }
 
-void UQuakeMapAsset::MarkTexture(qformats::map::QMap *NativeMap, const FString& TextureName, qformats::map::Face::eFaceType t)
+void UQuakeMapAsset::MarkTexture(qformats::map::QMap* NativeMap, const FString& TextureName,
+                                 qformats::map::Face::eFaceType t)
 {
 	if (!TextureName.IsEmpty())
 	{
 		NativeMap->SetFaceTypeByTextureID(TCHAR_TO_UTF8(*TextureName), t);
-		NativeMap->SetFaceTypeByTextureID(TCHAR_TO_UTF8(*TextureName.ToUpper()), t);	
+		NativeMap->SetFaceTypeByTextureID(TCHAR_TO_UTF8(*TextureName.ToUpper()), t);
 	}
 }
 
 void UQuakeMapAsset::FillCacheFromTextures(qformats::map::QMap* NativeMap)
 {
-	for (const auto &TexName : NativeMap->GetTexturesNames())
+	for (const auto& TexName : NativeMap->GetTexturesNames())
 	{
 		UTexture2D* texture = nullptr;
-		UMaterial* Material = BaseMaterial;
+		UMaterial* Material = Options.BaseMaterial;
 		TArray<FAssetData> ObjectList;
 
-		if (MaterialOverrideFolder != NAME_None) {
-			AssetRegistryModule.Get().GetAssetsByPaths({MaterialOverrideFolder}, ObjectList, true);
+		if (Options.MaterialOverrideFolder != NAME_None)
+		{
+			AssetRegistryModule.Get().GetAssetsByPaths({Options.MaterialOverrideFolder}, ObjectList, true);
 			FHashedMaterialParameterInfo paramInfo{};
 			paramInfo.Name = FScriptName("BaseTexture");
-			for (const auto &Obj : ObjectList)
+			for (const auto& Obj : ObjectList)
 			{
-				if (Obj.GetClass() == UMaterial::StaticClass() && FString(TexName.c_str()) == FPaths::GetBaseFilename(Obj.GetFullName()))
+				if (Obj.GetClass() == UMaterial::StaticClass() && FString(TexName.c_str()) == FPaths::GetBaseFilename(
+					Obj.GetFullName()))
 				{
 					Material = Cast<UMaterial>(Obj.GetAsset());
 					UTexture* TmpTex = nullptr;
@@ -439,15 +453,16 @@ void UQuakeMapAsset::FillCacheFromTextures(qformats::map::QMap* NativeMap)
 				}
 			}
 		}
-		
-		if (TextureFolder != NAME_None)
+
+		if (Options.TextureFolder != NAME_None)
 		{
-			AssetRegistryModule.Get().GetAssetsByPaths({TextureFolder}, ObjectList, true);
+			AssetRegistryModule.Get().GetAssetsByPaths({Options.TextureFolder}, ObjectList, true);
 			if (texture == nullptr)
 			{
-				for (const auto &Obj : ObjectList)
+				for (const auto& Obj : ObjectList)
 				{
-					if (Obj.GetClass() == UTexture2D::StaticClass() && FString(TexName.c_str()) == FPaths::GetBaseFilename(Obj.GetFullName()))
+					if (Obj.GetClass() == UTexture2D::StaticClass() && FString(TexName.c_str()) ==
+						FPaths::GetBaseFilename(Obj.GetFullName()))
 					{
 						texture = Cast<UTexture2D>(Obj.GetAsset());
 						break;
@@ -464,7 +479,7 @@ void UQuakeMapAsset::FillCacheFromTextures(qformats::map::QMap* NativeMap)
 
 		if (texture->IsValidLowLevel())
 		{
-				TextureCache.Add(FString(TexName.c_str()), texture);
+			TextureCache.Add(FString(TexName.c_str()), texture);
 		}
 	}
 }

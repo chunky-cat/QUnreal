@@ -4,29 +4,12 @@ using UnrealBuildTool;
 
 public class QUnreal : ModuleRules
 {
-	private string ThirdPartyPath()
-	{
-		return Path.Combine(ModuleDirectory, "..", "..", "ThirdParty");
-	}
-
-	private string IncludePath()
-	{
-		return Path.Combine(ThirdPartyPath(), "include");
-	}
-    
-	private string GetOSLibPath()
-	{
-		if (Target.Platform == UnrealTargetPlatform.Mac)
-		{
-			return Path.Combine(ThirdPartyPath(), "Libs", "Mac");
-		}
-		return Path.Combine(ThirdPartyPath(), "Libs", "Win");
-	}
 	
 	public QUnreal(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		
+		CppStandard = CppStandardVersion.Cpp20;
+
 		PublicIncludePaths.AddRange(
 			new string[] {
 				// ... add public include paths required here ...
@@ -60,7 +43,7 @@ public class QUnreal : ModuleRules
 				"RawMesh",
 				"UMG", 
 				"UnrealEd",
-				// ... add private dependencies that you statically link with here ...	
+				"DeveloperSettings"
 			}
 			);
 		
