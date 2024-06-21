@@ -8,6 +8,7 @@ AQWorldSpawnActor::AQWorldSpawnActor()
 {
 	WorldSpawnMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WorldSpawnMesh"));
 	RootComponent = WorldSpawnMeshComponent;
+	WorldSpawnMeshComponent->SetMobility(EComponentMobility::Static);
     PrimaryActorTick.bCanEverTick = false;
 }
 
@@ -37,7 +38,6 @@ void AQWorldSpawnActor::OnConstruction(const FTransform& Transform)
 		WorldSpawnMeshComponent->SetStaticMesh(QuakeMapAsset->WorldSpawnMesh);
 		WorldSpawnMeshComponent->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
 		WorldSpawnMeshComponent->UpdateCollisionFromStaticMesh();
-		WorldSpawnMeshComponent->SetMobility(EComponentMobility::Static);
 	}
 
 #endif

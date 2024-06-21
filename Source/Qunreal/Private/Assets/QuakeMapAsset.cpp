@@ -166,11 +166,9 @@ void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 void UQuakeMapAsset::PostEditChangeProperty(FPropertyChangedEvent& e)
 {
 	UObject::PostEditChangeProperty(e);
-
-	
 	
 	FName PropertyName = (e.Property != nullptr) ? e.Property->GetFName() : NAME_None;
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UQuakeMapAsset, Options.EntityClassOverrides))
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(FQuakeMapAssetOptions, EntityClassOverrides))
 	{
 		for (auto& PointEntity : PointEntities)
 		{
@@ -195,23 +193,23 @@ void UQuakeMapAsset::PostEditChangeProperty(FPropertyChangedEvent& e)
 		QuakeMapUpdated.Broadcast();
 	}
 
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UQuakeMapAsset, Options.InverseScale))
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(FQuakeMapAssetOptions, InverseScale))
 	{
 		LoadMapFromFile(SourceQMapFile);
 		QuakeMapUpdated.Broadcast();
 	}
 
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UQuakeMapAsset, Options.TextureFolder))
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(FQuakeMapAssetOptions, TextureFolder))
 	{
 		LoadMapFromFile(SourceQMapFile);
 	}
 
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UQuakeMapAsset, Options.MaterialOverrideFolder))
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(FQuakeMapAssetOptions, MaterialOverrideFolder))
 	{
 		LoadMapFromFile(SourceQMapFile);
 	}
 
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UQuakeMapAsset, Options.bImportLights))
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(FQuakeMapAssetOptions, bImportLights))
 	{
 		QuakeMapUpdated.Broadcast();
 	}
