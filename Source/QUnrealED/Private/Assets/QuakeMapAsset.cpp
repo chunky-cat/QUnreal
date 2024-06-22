@@ -76,6 +76,7 @@ UQuakeMapAsset::UQuakeMapAsset()
 
 void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 {
+	Reset();
 	auto NativeMap = new qformats::map::QMap();
 	NativeMap->LoadFile(std::string(TCHAR_TO_UTF8(*fileName)));
 
@@ -270,8 +271,7 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 		for (const auto &p : b.GetFaces())
 		{
 			const auto& vertices = p->GetVertices();
-			const auto&
-				indices = p->GetIndices();
+			const auto& indices = p->GetIndices();
 
 			if (p->GetVertices().size() < 3 || p->Type() != qformats::map::Face::SOLID)
 			{

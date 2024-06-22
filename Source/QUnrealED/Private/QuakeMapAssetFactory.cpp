@@ -98,13 +98,14 @@ EReimportResult::Type UQuakeMapAssetFactory::Reimport(UObject* Obj)
 	auto ReimportMap = static_cast<UQuakeMapAsset*>(Obj);
 	const FString Filename = ReimportMap->AssetImportData->GetFirstFilename();
 	const FString FileExtension = FPaths::GetExtension(Filename);
-	if( UFactory::StaticImportObject( ReimportMap->GetClass(), ReimportMap->GetOuter(), *ReimportMap->GetName(), RF_Public|RF_Standalone, *Filename, nullptr, this ) )
-	{
+	//if( UFactory::StaticImportObject( ReimportMap->GetClass(), ReimportMap->GetOuter(), *ReimportMap->GetName(), RF_Public|RF_Standalone, *Filename, ReimportMap, this ) )
+	//{
 		// Mark the package dirty after the successful import
+		ReimportMap->LoadMapFromFile(Filename);
 		ReimportMap->MarkPackageDirty();
 		ReimportMap->MapData->QuakeMapUpdated.Broadcast();
 		return EReimportResult::Succeeded;
-	}
+	//}
 	
-	return EReimportResult::Succeeded;
+	//return EReimportResult::Succeeded;
 }
