@@ -16,19 +16,18 @@ class QUNREAL_API UQuakeMapAsset : public UObject, public IInterface_AssetUserDa
 public:
 	UQuakeMapAsset();
 	void LoadMapFromFile(FString fileName);
-public:
+
 	UPROPERTY(EditAnywhere) bool bOverrideDefaultOptions = false;
 	UPROPERTY(EditAnywhere, DisplayName="Import Options", meta = (EditCondition = "bOverrideDefaultOptions"))
 	FQuakeMapAssetOptions Options;
 
-	UPROPERTY(EditAnywhere, DisplayName="Map Data")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, DisplayName="Map Data")
 	UQuakeMapData* MapData;
 	
 	UPROPERTY(VisibleAnywhere) TArray<UMaterialInstanceDynamic*> Materials;
 	UPROPERTY() FString SourceQMapFile;
 	
 	virtual void PostEditChangeProperty( struct FPropertyChangedEvent& PropertyChangedEvent) override;
-public:
 
 #if WITH_EDITORONLY_DATA
 	// Import data for this

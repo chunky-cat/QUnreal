@@ -35,6 +35,7 @@ void AQWorldSpawnActor::OnConstruction(const FTransform& Transform)
 #ifdef UE_EDITOR
 	if (MapData->IsValidLowLevel() && MapData->WorldSpawnMesh != nullptr)
 	{
+		WorldSpawnMeshComponent->SetMobility(EComponentMobility::Static);
 		WorldSpawnMeshComponent->SetStaticMesh(MapData->WorldSpawnMesh);
 		WorldSpawnMeshComponent->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
 		WorldSpawnMeshComponent->UpdateCollisionFromStaticMesh();
@@ -49,6 +50,12 @@ void AQWorldSpawnActor::ReloadFromAsset()
 	{
 		return;
 	}
+
+	WorldSpawnMeshComponent->SetMobility(EComponentMobility::Static);
+	WorldSpawnMeshComponent->SetStaticMesh(MapData->WorldSpawnMesh);
+	WorldSpawnMeshComponent->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
+	WorldSpawnMeshComponent->UpdateCollisionFromStaticMesh();
+	
 	
 	for (auto Actor : SolidEntities)
 	{

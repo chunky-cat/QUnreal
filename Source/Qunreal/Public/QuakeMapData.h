@@ -48,5 +48,4 @@ public:
 	float InverseScale = 1.0;
 
 	FSimpleMulticastDelegate QuakeMapUpdated;
-	
 };

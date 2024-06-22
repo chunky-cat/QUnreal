@@ -15,8 +15,8 @@ public:
 	virtual void Destroyed() override;
 	
 public:
-	UPROPERTY(EditAnywhere, Category = "QuakeMapAsset")
-	TObjectPtr<UQuakeMapData> MapData;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuakeMapAsset")
+	UQuakeMapData* MapData;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quake Entities")
 	TArray<AQEntityActor*> SolidEntities;

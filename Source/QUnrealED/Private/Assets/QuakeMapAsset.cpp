@@ -71,7 +71,10 @@ void UQuakeMapAsset::Reset()
 
 UQuakeMapAsset::UQuakeMapAsset()
 {
-	MapData = NewObject<UQuakeMapData>(this->GetPackage());
+	FString PackagePath = this->GetPackage()->GetPathName();
+	UPackage* Pkg = CreatePackage(*PackagePath);
+	MapData = NewObject<UQuakeMapData>(Pkg, "MapData", RF_Public | RF_Standalone | RF_MarkAsRootSet);
+	FAssetRegistryModule::AssetCreated(MapData);
 }
 
 void UQuakeMapAsset::LoadMapFromFile(FString fileName)
