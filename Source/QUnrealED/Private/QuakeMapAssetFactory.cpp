@@ -108,7 +108,4 @@ EReimportResult::Type UQuakeMapAssetFactory::Reimport(UObject* Obj)
 	ReimportMap->MarkPackageDirty();
 	ReimportMap->QuakeMapUpdated.Broadcast();
 	return EReimportResult::Succeeded;
-	
-	
-	return EReimportResult::Succeeded;
 }
