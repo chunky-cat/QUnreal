@@ -21,7 +21,7 @@ struct FEntity
 	UPROPERTY(VisibleAnywhere) FVector3d Origin;
 	UPROPERTY(VisibleAnywhere) float Angle;
 	UPROPERTY(VisibleAnywhere) TMap<FString,FString> Properties;
-	TSubclassOf<AQEntityActor> ClassTemplate;
+	UPROPERTY(VisibleAnywhere) TSubclassOf<AQEntityActor> ClassTemplate;
 };
 
 USTRUCT()

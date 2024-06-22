@@ -71,7 +71,7 @@ void UQuakeMapAsset::Reset()
 
 UQuakeMapAsset::UQuakeMapAsset()
 {
-	MapData = NewObject<UQuakeMapData>();
+	MapData = NewObject<UQuakeMapData>(this->GetPackage());
 }
 
 void UQuakeMapAsset::LoadMapFromFile(FString fileName)
