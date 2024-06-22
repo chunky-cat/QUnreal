@@ -267,10 +267,11 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 
 	for (const auto& b : Entity.get()->GetClippedBrushes())
 	{
-		for (const auto p : b.GetFaces())
+		for (const auto &p : b.GetFaces())
 		{
 			const auto& vertices = p->GetVertices();
-			const auto& indices = p->GetIndices();
+			const auto&
+				indices = p->GetIndices();
 
 			if (p->GetVertices().size() < 3 || p->Type() != qformats::map::Face::SOLID)
 			{
