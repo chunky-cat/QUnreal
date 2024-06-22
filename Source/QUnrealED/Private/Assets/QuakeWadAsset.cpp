@@ -39,12 +39,18 @@ FWadManager* FWadManager::GetInstance()
 
 void FWadManager::Refresh()
 {
-	TArray<UQuakeWadAsset*> Wads;
-	GetObjectsOfClass<UQuakeWadAsset>(Wads);
-	for (const auto w : Wads)
+	TArray<FAssetData> ObjectList;
+	FAssetRegistryModule AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));;
+	AssetRegistryModule.Get().GetAssetsByPaths({"/Game"}, ObjectList, true);
+	for (const auto& Obj : ObjectList)
 	{
-		AddWadAsset(w);
+		if (Obj.GetClass() == UQuakeWadAsset::StaticClass())
+		{
+			auto w = Cast<UQuakeWadAsset>(Obj.GetAsset());
+			AddWadAsset(w);
+		}
 	}
+	
 }
 
 

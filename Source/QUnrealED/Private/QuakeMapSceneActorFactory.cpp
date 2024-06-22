@@ -32,9 +32,9 @@ void UQuakeMapSceneActorFactory::PostSpawnActor(UObject *Asset, AActor *NewActor
 	{
 		FString ActorName = "WorldSpawn_";
 		ActorName.Append(QMAsset->GetName());
-		AQWorldSpawnActor *NewBSPScene = CastChecked<AQWorldSpawnActor>(NewActor);
-		FActorLabelUtilities::SetActorLabelUnique(NewBSPScene, ActorName);
-		NewBSPScene->QuakeMapAsset = QMAsset;
+		AQWorldSpawnActor *NewWSActor = CastChecked<AQWorldSpawnActor>(NewActor);
+		FActorLabelUtilities::SetActorLabelUnique(NewWSActor, ActorName);
+		NewWSActor->MapData = QMAsset->MapData;
 	}
 }
 
@@ -57,7 +57,8 @@ AActor* UQuakeMapSceneActorFactory::SpawnActor(UObject* InAsset, ULevel* InLevel
 		actor = Cast<AQWorldSpawnActor>(Super::SpawnActor(InAsset, InLevel, InTransform, InSpawnParams));
 	}
 
-	actor->QuakeMapAsset = Cast<UQuakeMapAsset>(InAsset);
+	auto MapAsset = Cast<UQuakeMapAsset>(InAsset);
+	actor->MapData = MapAsset->MapData;
 	
 	if (actor->HasAnyFlags(RF_Transient))
 	{
@@ -66,10 +67,9 @@ AActor* UQuakeMapSceneActorFactory::SpawnActor(UObject* InAsset, ULevel* InLevel
 
 	if (actor->SolidEntities.Num() > 0) return actor;
 	int meshNum = 0;
-	actor->SetFolderPath(*actor->QuakeMapAsset->GetName());
-	actor->QuakeMapAsset->QuakeMapUpdated.AddUObject(actor, &AQWorldSpawnActor::OnQuakeMapUpdated);
+	actor->SetFolderPath(*MapAsset->GetName());
+	MapAsset->MapData->QuakeMapUpdated.AddUObject(actor, &AQWorldSpawnActor::OnQuakeMapUpdated);
 	actor->ReloadFromAsset();
-	
 	return actor;
 }
 

@@ -23,10 +23,13 @@ public class QUnrealED : ModuleRules
                 "Slate",
                 "SlateCore",
                 "AssetTools",
+                "RawMesh",
                 "QUnreal",
-                "UnrealEd"
+                "DeveloperSettings"
             }
         );
+        
+        PublicIncludePaths.AddRange( new string[] {Path.Combine(ModuleDirectory, "qformats", "include")});
         
         CppStandard = CppStandardVersion.Cpp20;
 

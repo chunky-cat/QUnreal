@@ -1,6 +1,6 @@
 #pragma once
 #include "QEntityActor.h"
-#include "Assets/QuakeMapAsset.h"
+#include "QuakeMapData.h"
 
 #include "Engine/PointLight.h"
 #include "QWorldSpawnActor.generated.h"
@@ -15,8 +15,8 @@ public:
 	virtual void Destroyed() override;
 	
 public:
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuakeMapAsset")
-	UQuakeMapAsset *QuakeMapAsset;
+	UPROPERTY(EditAnywhere, Category = "QuakeMapAsset")
+	TObjectPtr<UQuakeMapData> MapData;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quake Entities")
 	TArray<AQEntityActor*> SolidEntities;

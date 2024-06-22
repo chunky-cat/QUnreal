@@ -33,9 +33,9 @@ void AQWorldSpawnActor::Destroyed()
 void AQWorldSpawnActor::OnConstruction(const FTransform& Transform)
 {
 #ifdef UE_EDITOR
-	if (QuakeMapAsset != nullptr && QuakeMapAsset->WorldSpawnMesh != nullptr)
+	if (MapData->IsValidLowLevel() && MapData->WorldSpawnMesh != nullptr)
 	{
-		WorldSpawnMeshComponent->SetStaticMesh(QuakeMapAsset->WorldSpawnMesh);
+		WorldSpawnMeshComponent->SetStaticMesh(MapData->WorldSpawnMesh);
 		WorldSpawnMeshComponent->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
 		WorldSpawnMeshComponent->UpdateCollisionFromStaticMesh();
 	}
@@ -45,13 +45,11 @@ void AQWorldSpawnActor::OnConstruction(const FTransform& Transform)
 
 void AQWorldSpawnActor::ReloadFromAsset()
 {
-	if (QuakeMapAsset == nullptr)
+	if (!MapData->IsValidLowLevel() && !MapData->WorldSpawnMesh)
 	{
 		return;
 	}
 	
-	//TArray<AActor*> Actors;
-	//GetAttachedActors(Actors);
 	for (auto Actor : SolidEntities)
 	{
 		Actor->Destroy();
@@ -67,9 +65,9 @@ void AQWorldSpawnActor::ReloadFromAsset()
 	SolidEntities.Empty();
 	PointLights.Empty();
 	
-	for (int i = 0;  i < QuakeMapAsset->SolidEntities.Num(); i++)
+	for (int i = 0;  i < MapData->SolidEntities.Num(); i++)
 	{
-		auto Entity = QuakeMapAsset->SolidEntities[i];
+		auto Entity = MapData->SolidEntities[i];
 		auto MeshStr = FString("AS_"+Entity.UniqueClassName);
 		FActorSpawnParameters p;
 		p.Owner = this;
@@ -83,22 +81,25 @@ void AQWorldSpawnActor::ReloadFromAsset()
 			continue;
 		}
 		
-		EntityActor->QuakeMapAsset = QuakeMapAsset;
+		
+#if WITH_EDITOR
 		FActorLabelUtilities::SetActorLabelUnique(EntityActor, MeshStr);
+		EntityActor->SetPivotOffset(Entity.Center);
+#endif
 		
 		EntityActor->EntityName = (*MeshStr);
 		EntityActor->ClassName = Entity.ClassName;
 		EntityActor->EntityMeshComponent->SetStaticMesh(Entity.Mesh);
 		EntityActor->Setup();
-		EntityActor->SetPivotOffset(Entity.Center);
+
 		EntityActor->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
 		SolidEntities.Emplace(EntityActor);
 	}
 
-	for (int i = 0;  i < QuakeMapAsset->PointEntities.Num(); i++)
+	for (int i = 0;  i < MapData->PointEntities.Num(); i++)
 	{
-		auto Entity = QuakeMapAsset->PointEntities[i];
-		if (Entity.ClassName == "light" && QuakeMapAsset->Options.bImportLights)
+		auto Entity = MapData->PointEntities[i];
+		if (Entity.ClassName == "light" && MapData->bImportLights)
 		{
 			ImportLightFromMap(Entity);
 		}
@@ -111,16 +112,16 @@ void AQWorldSpawnActor::PostRegisterAllComponents()
 	{
 		return;
 	}
-	
-#ifdef UE_EDITOR
-	if (!bAlreadyPostRegistered && QuakeMapAsset->IsValidLowLevel() && !HasAnyFlags(RF_Transient))
+#if WITH_EDITOR
+	if (!bAlreadyPostRegistered && MapData->WorldSpawnMesh->IsValidLowLevel() && !HasAnyFlags(RF_Transient))
 	{
 		bAlreadyPostRegistered = true;
 		UE_LOG(LogTemp, Warning, TEXT("registered all components, REROLL!!!"));
 		ReloadFromAsset();
-		QuakeMapAsset->QuakeMapUpdated.AddUObject(this, &AQWorldSpawnActor::ReloadFromAsset);
+		MapData->QuakeMapUpdated.AddUObject(this, &AQWorldSpawnActor::ReloadFromAsset);
 	}
-#endif	
+#endif
+
 	Super::PostRegisterAllComponents();
 }
 
@@ -131,7 +132,7 @@ void AQWorldSpawnActor::ImportLightFromMap(const FEntity& LightEntity)
 	p.Owner = this;
 
 	auto Trans = LightEntity.Origin + GetTransform().GetLocation();
-	Trans /= QuakeMapAsset->Options.InverseScale;
+	Trans /= MapData->InverseScale;
 	auto PtLight = GetWorld()->SpawnActor<APointLight>(APointLight::StaticClass(),FTransform3d(Trans),p);
 		
 	float Brightness = 300;
@@ -140,10 +141,14 @@ void AQWorldSpawnActor::ImportLightFromMap(const FEntity& LightEntity)
 		Brightness = FCString::Atof(*LightEntity.Properties["light"]);
 	}
 
-	Brightness = Brightness/QuakeMapAsset->Options.InverseScale;
+	Brightness = Brightness/MapData->InverseScale;
 	PtLight->SetRadius(Brightness*6);
 	PtLight->SetBrightness(Brightness*0.7);
+
+#if WITH_EDITOR
 	FActorLabelUtilities::SetActorLabelUnique(PtLight, MeshStr);
+#endif
+
 	PtLight->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
 	PtLight->SetMobility(EComponentMobility::Static);
 	PointLights.Emplace(PtLight);

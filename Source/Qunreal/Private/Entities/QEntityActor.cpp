@@ -1,6 +1,6 @@
 #include "Entities/QEntityActor.h"
 
-AQEntityActor::AQEntityActor(): QuakeMapAsset(nullptr)
+AQEntityActor::AQEntityActor()
 {
 	PrimaryActorTick.bCanEverTick = false;
 }

@@ -1,7 +1,5 @@
 #include "QuakeMapAssetFactory.h"
 
-#include "FileHelpers.h"
-#include "QUnrealSettings.h"
 #include "Assets/QuakeMapAsset.h"
 #include "EditorFramework/AssetImportData.h"
 
@@ -98,17 +96,15 @@ int32 UQuakeMapAssetFactory::GetPriority() const
 EReimportResult::Type UQuakeMapAssetFactory::Reimport(UObject* Obj)
 {
 	auto ReimportMap = static_cast<UQuakeMapAsset*>(Obj);
-	//ReimportMap->LoadMapFromFile(ReimportMap->SourceQMapFile);
-	//GEditor->GetEditorSubsystem<UImportSubsystem>()->BroadcastAssetReimport(ReimportMap);
-	//const FString Filename = ReimportMap->AssetImportData->GetFirstFilename();
-	//const FString FileExtension = FPaths::GetExtension(Filename);
-
-	ReimportMap->LoadMapFromFile(ReimportMap->SourceQMapFile);
-	// Mark the package dirty after the successful import
-	ReimportMap->MarkPackageDirty();
-	ReimportMap->QuakeMapUpdated.Broadcast();
-	return EReimportResult::Succeeded;
-	
+	const FString Filename = ReimportMap->AssetImportData->GetFirstFilename();
+	const FString FileExtension = FPaths::GetExtension(Filename);
+	if( UFactory::StaticImportObject( ReimportMap->GetClass(), ReimportMap->GetOuter(), *ReimportMap->GetName(), RF_Public|RF_Standalone, *Filename, nullptr, this ) )
+	{
+		// Mark the package dirty after the successful import
+		ReimportMap->MarkPackageDirty();
+		ReimportMap->MapData->QuakeMapUpdated.Broadcast();
+		return EReimportResult::Succeeded;
+	}
 	
 	return EReimportResult::Succeeded;
 }
