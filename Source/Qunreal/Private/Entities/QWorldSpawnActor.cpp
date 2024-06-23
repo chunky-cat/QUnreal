@@ -1,7 +1,5 @@
 #include "Entities/QWorldSpawnActor.h"
 #include "Entities/QSolidEntityActor.h"
-#include "Kismet/BlueprintTypeConversions.h"
-
 #include "PhysicsEngine/BodySetup.h"
 
 // Sets default values

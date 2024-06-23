@@ -19,4 +19,5 @@ public:
 	bool bTriggered = false;
 	UPROPERTY(EditAnywhere, Category="Trigger")
 	FString TriggerTarget;
+	
 };

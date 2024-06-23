@@ -337,6 +337,7 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 					}
 				}
 				rawMesh.FaceMaterialIndices.Add(MatIDMap[TexID]);
+				
 				rawMesh.FaceSmoothingMasks.Add(0);
 			}
 			offset_idx += vertices.size();

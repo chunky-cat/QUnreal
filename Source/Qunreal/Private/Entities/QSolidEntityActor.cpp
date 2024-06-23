@@ -13,7 +13,7 @@ void AQSolidEntityActor::Setup()
 	EntityMeshComponent->UpdateCollisionFromStaticMesh();
 	
 	EntityMeshComponent->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
-	EntityMeshComponent->SetMobility(EComponentMobility::Static);
+	EntityMeshComponent->SetMobility(Mobility);
 	EntityMeshComponent->SetVisibility(true);
 	EntityMeshComponent->bHiddenInGame = false;
 }

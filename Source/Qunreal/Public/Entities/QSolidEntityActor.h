@@ -11,6 +11,8 @@ class QUNREAL_API AQSolidEntityActor : public AQEntityActor
 public:
 	AQSolidEntityActor();
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	TEnumAsByte<EComponentMobility::Type> Mobility = EComponentMobility::Static;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 	UStaticMeshComponent* EntityMeshComponent;
 	virtual void Setup() override;
