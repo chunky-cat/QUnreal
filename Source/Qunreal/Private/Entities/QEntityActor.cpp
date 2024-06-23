@@ -1,11 +1,24 @@
 #include "Entities/QEntityActor.h"
 
-AQEntityActor::AQEntityActor()
+void IQEntityInitiator::Initialize()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	if (GetEntityData().Properties.Contains("targetname"))
+	{
+		GetEntityData().TargetName = GetEntityData().Properties["targetname"];	
+	}
+	if (GetEntityData().Properties.Contains("message"))
+	{
+		GetEntityData().Message = GetEntityData().Properties["message"];	
+	}
+
+	Setup();
 }
 
-void AQEntityActor::Setup()
+void IQEntityInitiator::Setup()
 {
 	
+}
+
+AQEntityActor::AQEntityActor()
+{
 }

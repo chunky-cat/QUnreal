@@ -13,7 +13,7 @@ struct FQEntityClassesDataEntry
 	UPROPERTY(EditAnywhere)
 	FName ClassName;
 	UPROPERTY(EditAnywhere)
-	TSubclassOf<AQEntityActor> Class;
+	TSubclassOf<AActor> Class;
 };
 
 UCLASS(BlueprintType, Category="QUnreal")
@@ -22,5 +22,5 @@ class QUNREAL_API UQEntityClassesData : public UDataAsset
 	GENERATED_BODY()
 public:
 	UPROPERTY(EditAnywhere, meta = (TitleProperty = "ClassName"))
-	TMap<FString, TSubclassOf<AQEntityActor>> Classes;
+	TMap<FString, TSubclassOf<AActor>> Classes;
 };

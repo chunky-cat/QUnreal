@@ -2,8 +2,17 @@
 #include "QEntityActor.h"
 #include "QuakeMapData.h"
 
-#include "Engine/PointLight.h"
+#include "QSolidEntityActor.h"
 #include "QWorldSpawnActor.generated.h"
+
+USTRUCT(Blueprintable)
+struct FTriggerTargets
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleAnywhere)
+	TArray<AQSolidEntityActor*> Targets;
+};
 
 UCLASS()
 class QUNREAL_API AQWorldSpawnActor : public AActor
@@ -18,12 +27,16 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuakeMapAsset")
 	UQuakeMapData* MapData;
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quake Entities")
-	TArray<AQEntityActor*> SolidEntities;
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Point Lights")
-	TArray<APointLight*> PointLights;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Entities")
+	TArray<AActor*> SolidEntities;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Entities")
+	TArray<AActor*> PointEntities;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Entities")
+	TMap<FString,FTriggerTargets> TriggerTargets;
+
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 	UStaticMeshComponent* WorldSpawnMeshComponent;
+
 	virtual void OnConstruction(const FTransform& Transform) override;
 	void OnQuakeMapUpdated();
 	void ReloadFromAsset();
@@ -31,5 +44,5 @@ public:
 
 private:
 	bool bAlreadyPostRegistered = false;
-	void ImportLightFromMap(const FEntity &LightEntity);
+	void ImportPointEntity(const FEntity &Entity);
 };

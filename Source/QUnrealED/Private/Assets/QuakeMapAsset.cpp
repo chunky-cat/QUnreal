@@ -5,6 +5,7 @@
 #include "Assets/AssetHelper.h"
 #include "Entities/QSolidEntityActor.h"
 #include "EditorFramework/AssetImportData.h"
+#include "Entities/QSolidTriggerActor.h"
 
 qformats::textures::ITexture* UQuakeMapAsset::onTextureRequest(std::string name)
 {
@@ -121,6 +122,7 @@ void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 	FVector3d Center{};
 	MapData->WorldSpawnMesh = ConvertEntityToModel(NativeMap->GetSolidEntities()[0], Center);
 	MapData->SolidEntities.Empty();
+	MapData->PointEntities.Empty();
 	EntityClassCount.clear();
 
 	for (int i = 1; i < NativeMap->GetSolidEntities().size(); i++)
@@ -138,10 +140,16 @@ void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 			NewSolidEntity.UniqueClassName = FString(EntityMesh->GetName()),
 			NewSolidEntity.Type = EntityType_Solid;
 		NewSolidEntity.ClassTemplate = AQSolidEntityActor::StaticClass();
-		if (Options.EntityClassOverrides != nullptr && Options.EntityClassOverrides->Classes.Contains(
-			NewSolidEntity.ClassName))
+		if (Options.EntityClassOverrides != nullptr && Options.EntityClassOverrides->Classes.Contains(NewSolidEntity.ClassName))
 		{
 			NewSolidEntity.ClassTemplate = Options.EntityClassOverrides->Classes[NewSolidEntity.ClassName];
+		}
+		else
+		{
+			if (NewSolidEntity.ClassName.Contains("trigger"))
+			{
+				NewSolidEntity.ClassTemplate = AQSolidTriggerActor::StaticClass();
+			}
 		}
 
 		MapData->SolidEntities.Emplace(NewSolidEntity);
@@ -149,15 +157,16 @@ void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 
 	for (const auto& NativePointEntity : NativeMap->GetPointEntities())
 	{
-		FEntity NewPointEntity{};
-		CreateEntityFromNative(&NewPointEntity, NativePointEntity, Options.InverseScale);
-		NewPointEntity.UniqueClassName = GetUniqueEntityName(NativePointEntity.get());
-		MapData->PointEntities.Emplace(NewPointEntity);
-		NewPointEntity.ClassTemplate = AQEntityActor::StaticClass();
-		if (Options.EntityClassOverrides != nullptr && Options.EntityClassOverrides->Classes.Contains(
-			NewPointEntity.ClassName))
+		auto ClassName = FString(NativePointEntity->classname.c_str());
+
+		if (Options.EntityClassOverrides != nullptr && Options.EntityClassOverrides->Classes.Contains(ClassName))
 		{
+			FEntity NewPointEntity{};
+			CreateEntityFromNative(&NewPointEntity, NativePointEntity, Options.InverseScale);
+			NewPointEntity.UniqueClassName = GetUniqueEntityName(NativePointEntity.get());
+			MapData->PointEntities.Emplace(NewPointEntity);
 			NewPointEntity.ClassTemplate = Options.EntityClassOverrides->Classes[NewPointEntity.ClassName];
+			MapData->PointEntities.Emplace(NewPointEntity);
 		}
 	}
 
@@ -177,13 +186,12 @@ void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 void UQuakeMapAsset::PostEditChangeProperty(FPropertyChangedEvent& e)
 {
 	UObject::PostEditChangeProperty(e);
-	
+
 	FName PropertyName = (e.Property != nullptr) ? e.Property->GetFName() : NAME_None;
 	if (PropertyName == GET_MEMBER_NAME_CHECKED(FQuakeMapAssetOptions, EntityClassOverrides))
 	{
 		for (auto& PointEntity : MapData->PointEntities)
 		{
-			PointEntity.ClassTemplate = AQEntityActor::StaticClass();
 			if (Options.EntityClassOverrides != nullptr && Options.EntityClassOverrides->Classes.Contains(
 				PointEntity.ClassName))
 			{
@@ -194,8 +202,7 @@ void UQuakeMapAsset::PostEditChangeProperty(FPropertyChangedEvent& e)
 		for (auto& SolidEntity : MapData->SolidEntities)
 		{
 			SolidEntity.ClassTemplate = AQSolidEntityActor::StaticClass();
-			if (Options.EntityClassOverrides != nullptr && Options.EntityClassOverrides->Classes.Contains(
-				SolidEntity.ClassName))
+			if (Options.EntityClassOverrides != nullptr && Options.EntityClassOverrides->Classes.Contains(SolidEntity.ClassName))
 			{
 				SolidEntity.ClassTemplate = Options.EntityClassOverrides->Classes[SolidEntity.ClassName];
 			}
@@ -206,7 +213,6 @@ void UQuakeMapAsset::PostEditChangeProperty(FPropertyChangedEvent& e)
 
 	if (PropertyName == GET_MEMBER_NAME_CHECKED(FQuakeMapAssetOptions, InverseScale))
 	{
-		
 		MapData->InverseScale = Options.InverseScale;
 		LoadMapFromFile(SourceQMapFile);
 		MapData->QuakeMapUpdated.Broadcast();
@@ -271,7 +277,7 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 
 	for (const auto& b : Entity.get()->GetClippedBrushes())
 	{
-		for (const auto &p : b.GetFaces())
+		for (const auto& p : b.GetFaces())
 		{
 			const auto& vertices = p->GetVertices();
 			const auto& indices = p->GetIndices();
@@ -357,11 +363,11 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 	
 	PackagePath = FPaths::Combine(PackagePath, BaseName+"_Meshes", MeshName);
 	*/
-	
+
 	FString MeshName = GetUniqueEntityName(Entity.get());
 	FString PackagePath = this->GetPackage()->GetPathName();
 	FString PackageFileName = FPackageName::LongPackageNameToFilename(PackagePath,
-																	  FPackageName::GetAssetPackageExtension());
+	                                                                  FPackageName::GetAssetPackageExtension());
 	UPackage* Pkg = CreatePackage(*PackagePath);
 	UStaticMesh* Mesh = NewObject<UStaticMesh>(Pkg, *MeshName, RF_Public | RF_Standalone | RF_MarkAsRootSet);
 	FAssetRegistryModule::AssetCreated(Mesh);
@@ -418,7 +424,7 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 	Mesh->Build(true);
 	Mesh->PostEditChange();
 	Mesh->SetLightingGuid();
-	
+
 	FSavePackageArgs Args;
 	Args.TopLevelFlags = RF_Public | RF_Standalone;
 	Args.SaveFlags = SAVE_NoError;

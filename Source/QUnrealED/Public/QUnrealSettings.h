@@ -12,7 +12,7 @@ struct QUNREAL_API FQuakeMapAssetOptions
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere)
-	TSoftObjectPtr<UQEntityClassesData> EntityClassOverrides;
+	UQEntityClassesData* EntityClassOverrides;
 	
 	UPROPERTY(EditAnywhere)
 	UMaterial *BaseMaterial;
