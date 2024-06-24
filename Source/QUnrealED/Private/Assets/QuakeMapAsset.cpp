@@ -115,10 +115,17 @@ void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 		return this->onTextureRequest(name);
 	});
 
-	if (NativeMap->GetSolidEntities().size() == 0)
+	if (NativeMap->GetSolidEntities().size() == 0 || NativeMap->WorldSpawn() == nullptr)
+	{
 		return;
+	}
+	
 
-
+	if (NativeMap->WorldSpawn()->attributes.contains("qu_meshlib"))
+	{
+		bImportAsStaticMeshLib = true;
+	}
+	
 	FVector3d Center{};
 	MapData->WorldSpawnMesh = ConvertEntityToModel(NativeMap->GetSolidEntities()[0], Center);
 	MapData->SolidEntities.Empty();
@@ -155,18 +162,20 @@ void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 		MapData->SolidEntities.Emplace(NewSolidEntity);
 	}
 
-	for (const auto& NativePointEntity : NativeMap->GetPointEntities())
-	{
-		auto ClassName = FString(NativePointEntity->classname.c_str());
-
-		if (Options.EntityClassOverrides != nullptr && Options.EntityClassOverrides->Classes.Contains(ClassName))
+	if (!bImportAsStaticMeshLib) {
+		for (const auto& NativePointEntity : NativeMap->GetPointEntities())
 		{
-			FEntity NewPointEntity{};
-			CreateEntityFromNative(&NewPointEntity, NativePointEntity, Options.InverseScale);
-			NewPointEntity.UniqueClassName = GetUniqueEntityName(NativePointEntity.get());
-			MapData->PointEntities.Emplace(NewPointEntity);
-			NewPointEntity.ClassTemplate = Options.EntityClassOverrides->Classes[NewPointEntity.ClassName];
-			MapData->PointEntities.Emplace(NewPointEntity);
+			auto ClassName = FString(NativePointEntity->classname.c_str());
+
+			if (Options.EntityClassOverrides != nullptr && Options.EntityClassOverrides->Classes.Contains(ClassName))
+			{
+				FEntity NewPointEntity{};
+				CreateEntityFromNative(&NewPointEntity, NativePointEntity, Options.InverseScale);
+				NewPointEntity.UniqueClassName = GetUniqueEntityName(NativePointEntity.get()->classname);
+				MapData->PointEntities.Emplace(NewPointEntity);
+				NewPointEntity.ClassTemplate = Options.EntityClassOverrides->Classes[NewPointEntity.ClassName];
+				MapData->PointEntities.Emplace(NewPointEntity);
+			}
 		}
 	}
 
@@ -272,6 +281,13 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 	FVector3d Min(b0.min.x(), b0.min.y(), b0.min.z());
 	FVector3d Max(b0.max.x(), b0.max.y(), b0.max.z());
 
+	fvec3 VertOffset{};
+
+	if (bImportAsStaticMeshLib)
+	{
+		VertOffset = Entity->GetCenter();
+	}
+
 
 	double AreaEstimate = 0;
 
@@ -288,11 +304,12 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 			}
 			for (int i = p->GetVertices().size() - 1; i >= 0; i--)
 			{
-				const auto& pt = vertices[i];
+				auto pt = vertices[i].point;
+				pt -= VertOffset;
 				rawMesh.VertexPositions.Add(FVector3f(
-					-pt.point[0],
-					pt.point[1],
-					pt.point[2]
+					-pt[0],
+					pt[1],
+					pt[2]
 				) / Options.InverseScale);
 			}
 
@@ -358,17 +375,21 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 	OutCenter = FVector3d(-entCenter.x(), entCenter.y(), entCenter.z());
 	auto MapName = FPaths::GetBaseFilename(SourceQMapFile);
 
-	/*
-	FString PackagePath = FPaths::GetPath(this->GetPathName());
-	FString BaseName = FPaths::GetBaseFilename(this->GetPathName());
 	
-	PackagePath = FPaths::Combine(PackagePath, BaseName+"_Meshes", MeshName);
-	*/
-
-	FString MeshName = GetUniqueEntityName(Entity.get());
+	FString MeshName = GetUniqueEntityName(Entity.get()->ClassName());
 	FString PackagePath = this->GetPackage()->GetPathName();
-	FString PackageFileName = FPackageName::LongPackageNameToFilename(PackagePath,
-	                                                                  FPackageName::GetAssetPackageExtension());
+
+	if (bImportAsStaticMeshLib) {
+		if (!Entity->tbName.empty())
+		{
+			MeshName = GetUniqueEntityName(Entity->tbName.c_str());
+		}
+		
+		PackagePath = FPaths::GetPath(this->GetPathName());
+		FString BaseName = FPaths::GetBaseFilename(this->GetPathName());
+		PackagePath = FPaths::Combine(PackagePath, BaseName+"_Meshes", MeshName);
+	}
+	
 	UPackage* Pkg = CreatePackage(*PackagePath);
 	UStaticMesh* Mesh = NewObject<UStaticMesh>(Pkg, *MeshName, RF_Public | RF_Standalone | RF_MarkAsRootSet);
 	FAssetRegistryModule::AssetCreated(Mesh);
@@ -426,23 +447,24 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 	Mesh->PostEditChange();
 	Mesh->SetLightingGuid();
 
-	FSavePackageArgs Args;
-	Args.TopLevelFlags = RF_Public | RF_Standalone;
-	Args.SaveFlags = SAVE_NoError;
-
+	if (bImportAsStaticMeshLib)
+	{
+		
+	}
+	
 	return Mesh;
 }
 
-FString UQuakeMapAsset::GetUniqueEntityName(qformats::map::BaseEntity* Ent)
+FString UQuakeMapAsset::GetUniqueEntityName(const std::string &ClassName)
 {
-	auto Name = FString(Ent->classname.c_str()) + "_";
-	if (!EntityClassCount.contains(Ent->classname))
+	auto Name = FString(ClassName.c_str()) + "_";
+	if (!EntityClassCount.contains(ClassName))
 	{
-		EntityClassCount[Ent->classname] = 0;
+		EntityClassCount[ClassName] = 0;
 		Name.AppendInt(0);
 		return Name;
 	}
-	Name.AppendInt(EntityClassCount[Ent->classname] += 1);
+	Name.AppendInt(EntityClassCount[ClassName] += 1);
 	return Name;
 }
 

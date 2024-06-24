@@ -21,6 +21,9 @@ public:
 	UPROPERTY(EditAnywhere, DisplayName="Import Options", meta = (EditCondition = "bOverrideDefaultOptions"))
 	FQuakeMapAssetOptions Options;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bImportAsStaticMeshLib;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, DisplayName="Map Data")
 	UQuakeMapData* MapData;
 	
@@ -44,7 +47,7 @@ public:
 private:
 	void Reset();
 	UStaticMesh* ConvertEntityToModel(const qformats::map::SolidEntityPtr &ent, FVector3d &OutCenter);
-	FString GetUniqueEntityName(qformats::map::BaseEntity *Ent);
+	FString GetUniqueEntityName(const std::string &ClassName);
 	static void MarkTexture(qformats::map::QMap *NativeMap, const FString &TextureName, qformats::map::Face::eFaceType t);
 	void FillCacheFromTextures(qformats::map::QMap* NativeMap);
 	qformats::textures::ITexture *onTextureRequest(std::string name);
