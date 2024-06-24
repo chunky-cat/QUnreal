@@ -6,6 +6,18 @@
 #include "Entities/QEntityClassesData.h"
 #include "QUnrealSettings.generated.h"
 
+UENUM(Blueprintable)
+enum EQuakeEntityPivot
+{
+	Lower_Left = 0,
+	Upper_Left = 1,
+	Lower_Right = 2,
+	Upper_Right = 3,
+	Center = 4,
+	Lower_Center = 5,
+	Upper_Center = 6,
+};
+
 USTRUCT(Blueprintable)
 struct QUNREAL_API FQuakeMapAssetOptions
 {
@@ -19,6 +31,9 @@ struct QUNREAL_API FQuakeMapAssetOptions
 	
 	UPROPERTY(EditAnywhere)
 	float InverseScale = 1;
+	
+	UPROPERTY(EditAnywhere)
+	TEnumAsByte<EQuakeEntityPivot> DefaultPivot = Lower_Left;
 
 	UPROPERTY(EditAnywhere)
 	float MaxLightmapSize = 512;
@@ -40,9 +55,6 @@ struct QUNREAL_API FQuakeMapAssetOptions
 
 	UPROPERTY(EditAnywhere)
 	FString SkyTexture = "sky";
-	
-	UPROPERTY(EditAnywhere)
-	bool bImportLights = false;
 };
 
 

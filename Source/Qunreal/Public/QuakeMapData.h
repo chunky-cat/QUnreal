@@ -31,6 +31,7 @@ struct FSolidEntity : public FEntity
 	
 	UPROPERTY(VisibleAnywhere) UStaticMesh *Mesh;
 	UPROPERTY(VisibleAnywhere) FVector3d Center;
+	UPROPERTY(VisibleAnywhere) FVector3d Pivot;
 };
 
 UCLASS()

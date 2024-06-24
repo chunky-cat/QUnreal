@@ -46,7 +46,7 @@ public:
 
 private:
 	void Reset();
-	UStaticMesh* ConvertEntityToModel(const qformats::map::SolidEntityPtr &ent, FVector3d &OutCenter);
+	UStaticMesh* ConvertEntityToModel(const qformats::map::SolidEntityPtr &ent, FVector3d &OutCenter, FVector3d& OutPivot);
 	FString GetUniqueEntityName(const std::string &ClassName);
 	static void MarkTexture(qformats::map::QMap *NativeMap, const FString &TextureName, qformats::map::Face::eFaceType t);
 	void FillCacheFromTextures(qformats::map::QMap* NativeMap);
@@ -56,4 +56,5 @@ private:
 	TMap<FString, TWeakObjectPtr<UTexture2D>> TextureCache;
 	TMap<FString, TWeakObjectPtr<UMaterial>> MaterialOverrideCache;
 	FAssetRegistryModule &AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+	static fvec3 CalculateEntityPivot(const qformats::map::SolidEntityPtr &Entity, EQuakeEntityPivot Pivot);
 };

@@ -1,6 +1,7 @@
 #include "Assets/QuakeMapAsset.h"
 #include "Assets/QuakeWadAsset.h"
 #include "RawMesh.h"
+#include "StaticMeshAttributes.h"
 #include "UObject/SavePackage.h"
 #include "Assets/AssetHelper.h"
 #include "Entities/QSolidEntityActor.h"
@@ -39,6 +40,61 @@ qformats::textures::ITexture* UQuakeMapAsset::onTextureRequest(std::string name)
 	return metatex;
 }
 
+fvec3 UQuakeMapAsset::CalculateEntityPivot(const qformats::map::SolidEntityPtr& Entity, EQuakeEntityPivot Pivot)
+{
+	if (Entity->attributes.contains("qu_pivot"))
+	{
+		auto pivotStr = Entity->attributes["qu_pivot"];
+		int pivotNum = std::stoi(pivotStr);
+		Pivot = static_cast<EQuakeEntityPivot>(pivotNum);
+	}
+
+	fvec3 PivotVec = Entity->GetMin();
+	
+	switch (Pivot)
+	{
+	case Lower_Left:
+		{
+			break;
+		}
+	case Upper_Left:
+		{
+			PivotVec.set_z(Entity->GetMax().z());
+			break;
+		}
+	case Lower_Right:
+		{
+			PivotVec.set_x(Entity->GetMax().x());
+			break;
+		}
+	case Upper_Right:
+		{
+			PivotVec.set_x(Entity->GetMax().x());
+			PivotVec.set_z(Entity->GetMax().z());
+			break;
+		}
+	case Center:
+		{
+			PivotVec = Entity->GetCenter();
+			break;
+		}
+	case Lower_Center:
+		{
+			PivotVec = Entity->GetCenter();
+			PivotVec.set_z(Entity->GetMin().z());
+			break;
+		}
+	case Upper_Center:
+		{
+			PivotVec = Entity->GetCenter();
+			PivotVec.set_z(Entity->GetMax().z());
+			break;
+		}
+	}
+
+	return PivotVec;
+}
+
 inline void CreateEntityFromNative(FEntity* InEnt, qformats::map::BaseEntityPtr Nent, float InverseScale)
 {
 	InEnt->ClassName = FString(Nent->classname.c_str());
@@ -64,7 +120,6 @@ void UQuakeMapAsset::Reset()
 	}
 
 	MapData->InverseScale = Options.InverseScale;
-	MapData->bImportLights = Options.bImportLights;
 	TextureCache.Empty();
 	MaterialOverrideCache.Empty();
 	Materials.Empty();
@@ -119,15 +174,15 @@ void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 	{
 		return;
 	}
-	
+
 
 	if (NativeMap->WorldSpawn()->attributes.contains("qu_meshlib"))
 	{
 		bImportAsStaticMeshLib = true;
 	}
-	
-	FVector3d Center{};
-	MapData->WorldSpawnMesh = ConvertEntityToModel(NativeMap->GetSolidEntities()[0], Center);
+
+	FVector3d Center{}, Pivot{};
+	MapData->WorldSpawnMesh = ConvertEntityToModel(NativeMap->GetSolidEntities()[0], Center, Pivot);
 	MapData->SolidEntities.Empty();
 	MapData->PointEntities.Empty();
 	EntityClassCount.clear();
@@ -137,17 +192,20 @@ void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 		auto NativeSolidEntity = NativeMap->GetSolidEntities()[i];
 		FSolidEntity NewSolidEntity{};
 		CreateEntityFromNative(&NewSolidEntity, NativeSolidEntity, Options.InverseScale);
-		auto EntityMesh = ConvertEntityToModel(NativeSolidEntity, Center);
+		auto EntityMesh = ConvertEntityToModel(NativeSolidEntity, Center,Pivot);
 		if (EntityMesh == nullptr)
 		{
 			continue;
 		}
 		NewSolidEntity.Center = Center / Options.InverseScale;
+		NewSolidEntity.Pivot = Pivot / Options.InverseScale;
+		
 		NewSolidEntity.Mesh = EntityMesh,
 			NewSolidEntity.UniqueClassName = FString(EntityMesh->GetName()),
 			NewSolidEntity.Type = EntityType_Solid;
 		NewSolidEntity.ClassTemplate = AQSolidEntityActor::StaticClass();
-		if (Options.EntityClassOverrides != nullptr && Options.EntityClassOverrides->Classes.Contains(NewSolidEntity.ClassName))
+		if (Options.EntityClassOverrides != nullptr && Options.EntityClassOverrides->Classes.Contains(
+			NewSolidEntity.ClassName))
 		{
 			NewSolidEntity.ClassTemplate = Options.EntityClassOverrides->Classes[NewSolidEntity.ClassName];
 		}
@@ -162,7 +220,8 @@ void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 		MapData->SolidEntities.Emplace(NewSolidEntity);
 	}
 
-	if (!bImportAsStaticMeshLib) {
+	if (!bImportAsStaticMeshLib)
+	{
 		for (const auto& NativePointEntity : NativeMap->GetPointEntities())
 		{
 			auto ClassName = FString(NativePointEntity->classname.c_str());
@@ -211,7 +270,8 @@ void UQuakeMapAsset::PostEditChangeProperty(FPropertyChangedEvent& e)
 		for (auto& SolidEntity : MapData->SolidEntities)
 		{
 			SolidEntity.ClassTemplate = AQSolidEntityActor::StaticClass();
-			if (Options.EntityClassOverrides != nullptr && Options.EntityClassOverrides->Classes.Contains(SolidEntity.ClassName))
+			if (Options.EntityClassOverrides != nullptr && Options.EntityClassOverrides->Classes.Contains(
+				SolidEntity.ClassName))
 			{
 				SolidEntity.ClassTemplate = Options.EntityClassOverrides->Classes[SolidEntity.ClassName];
 			}
@@ -235,12 +295,6 @@ void UQuakeMapAsset::PostEditChangeProperty(FPropertyChangedEvent& e)
 	if (PropertyName == GET_MEMBER_NAME_CHECKED(FQuakeMapAssetOptions, MaterialOverrideFolder))
 	{
 		LoadMapFromFile(SourceQMapFile);
-	}
-
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(FQuakeMapAssetOptions, bImportLights))
-	{
-		MapData->bImportLights = Options.bImportLights;
-		MapData->QuakeMapUpdated.Broadcast();
 	}
 }
 
@@ -269,7 +323,7 @@ void UQuakeMapAsset::Serialize(FArchive& Ar)
 	UObject::Serialize(Ar);
 }
 
-UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEntityPtr& Entity, FVector3d& OutCenter)
+UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEntityPtr& Entity, FVector3d& OutCenter, FVector3d& OutPivot)
 {
 	FVector3f EmptyVector = FVector3f(0, 0, 0);
 	FColor WhiteVertex = FColor(255, 255, 255, 255);
@@ -280,14 +334,13 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 	auto b0 = Entity.get()->GetClippedBrushes()[0];
 	FVector3d Min(b0.min.x(), b0.min.y(), b0.min.z());
 	FVector3d Max(b0.max.x(), b0.max.y(), b0.max.z());
-
+	fvec3 Pivot = CalculateEntityPivot(Entity, Options.DefaultPivot);
 	fvec3 VertOffset{};
 
 	if (bImportAsStaticMeshLib)
 	{
-		VertOffset = Entity->GetCenter();
+		VertOffset = Pivot;
 	}
-
 
 	double AreaEstimate = 0;
 
@@ -354,7 +407,7 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 					}
 				}
 				rawMesh.FaceMaterialIndices.Add(MatIDMap[TexID]);
-				
+
 				rawMesh.FaceSmoothingMasks.Add(0);
 			}
 			offset_idx += vertices.size();
@@ -373,23 +426,26 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 	rawMesh.CompactMaterialIndices();
 	auto entCenter = Entity->GetCenter();
 	OutCenter = FVector3d(-entCenter.x(), entCenter.y(), entCenter.z());
+	OutPivot = FVector3d(-Pivot.x(), Pivot.y(), Pivot.z());
+	
 	auto MapName = FPaths::GetBaseFilename(SourceQMapFile);
 
-	
+
 	FString MeshName = GetUniqueEntityName(Entity.get()->ClassName());
 	FString PackagePath = this->GetPackage()->GetPathName();
 
-	if (bImportAsStaticMeshLib) {
+	if (bImportAsStaticMeshLib)
+	{
 		if (!Entity->tbName.empty())
 		{
 			MeshName = GetUniqueEntityName(Entity->tbName.c_str());
 		}
-		
+
 		PackagePath = FPaths::GetPath(this->GetPathName());
 		FString BaseName = FPaths::GetBaseFilename(this->GetPathName());
-		PackagePath = FPaths::Combine(PackagePath, BaseName+"_Meshes", MeshName);
+		PackagePath = FPaths::Combine(PackagePath, BaseName + "_Meshes", MeshName);
 	}
-	
+
 	UPackage* Pkg = CreatePackage(*PackagePath);
 	UStaticMesh* Mesh = NewObject<UStaticMesh>(Pkg, *MeshName, RF_Public | RF_Standalone | RF_MarkAsRootSet);
 	FAssetRegistryModule::AssetCreated(Mesh);
@@ -447,15 +503,10 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 	Mesh->PostEditChange();
 	Mesh->SetLightingGuid();
 
-	if (bImportAsStaticMeshLib)
-	{
-		
-	}
-	
 	return Mesh;
 }
 
-FString UQuakeMapAsset::GetUniqueEntityName(const std::string &ClassName)
+FString UQuakeMapAsset::GetUniqueEntityName(const std::string& ClassName)
 {
 	auto Name = FString(ClassName.c_str()) + "_";
 	if (!EntityClassCount.contains(ClassName))

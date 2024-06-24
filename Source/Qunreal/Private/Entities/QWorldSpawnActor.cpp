@@ -91,7 +91,7 @@ void AQWorldSpawnActor::ReloadFromAsset()
 		
 #if WITH_EDITOR
 		FActorLabelUtilities::SetActorLabelUnique(EntityActor, MeshStr);
-		EntityActor->SetPivotOffset(Entity.Center);
+		EntityActor->SetPivotOffset(Entity.Pivot);
 #endif
 		
 		EntityActor->GetEntityData().EntityName = (*MeshStr);
