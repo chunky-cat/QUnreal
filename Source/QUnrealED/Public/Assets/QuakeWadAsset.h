@@ -8,7 +8,7 @@
 #include <QuakeWadAsset.generated.h>
 
 UCLASS()
-class QUNREAL_API UQuakeWadAsset : public UObject
+class QUNREALED_API UQuakeWadAsset : public UObject
 {
 	GENERATED_BODY()
 public:
