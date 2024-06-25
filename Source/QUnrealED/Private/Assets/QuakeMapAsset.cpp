@@ -1,9 +1,6 @@
 #include "Assets/QuakeMapAsset.h"
 #include "Assets/QuakeWadAsset.h"
 #include "RawMesh.h"
-#include "StaticMeshAttributes.h"
-#include "UObject/SavePackage.h"
-#include "Assets/AssetHelper.h"
 #include "Entities/QSolidEntityActor.h"
 #include "EditorFramework/AssetImportData.h"
 #include "Entities/QSolidTriggerActor.h"
@@ -162,7 +159,7 @@ void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 	MarkTexture(NativeMap, Options.ClipTexture, qformats::map::Face::CLIP);
 
 	NativeMap->GenerateGeometry();
-	FWadManager::GetInstance()->Refresh();
+	FWadManager::GetInstance()->Refresh(AssetRegistryModule);
 
 	FillCacheFromTextures(NativeMap);
 
@@ -351,11 +348,11 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 			const auto& vertices = p->GetVertices();
 			const auto& indices = p->GetIndices();
 
-			if (p->GetVertices().size() < 3 || p->Type() != qformats::map::Face::SOLID)
+			if (vertices.size() < 3 || p->Type() != qformats::map::Face::SOLID)
 			{
 				continue;
 			}
-			for (int i = p->GetVertices().size() - 1; i >= 0; i--)
+			for (int i = vertices.size() - 1; i >= 0; i--)
 			{
 				auto pt = vertices[i].point;
 				pt -= VertOffset;

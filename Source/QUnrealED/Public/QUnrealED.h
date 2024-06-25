@@ -7,7 +7,7 @@
 #include "Modules/ModuleManager.h"
 
 
-class FQUnrealEDModule : public IModuleInterface
+class QUNREALED_API FQUnrealEDModule : public IModuleInterface
 {
 public:
     virtual void StartupModule() override;

@@ -4,6 +4,7 @@
 
 #include "WadTexture2D.h"
 #include "qformats/wad/wad.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 
 #include <QuakeWadAsset.generated.h>
 
@@ -29,7 +30,7 @@ class FWadManager
 {
 public:
 	static FWadManager* GetInstance();
-	void Refresh();
+	void Refresh(const FAssetRegistryModule &AssetRegistryModule);
 	void AddWadAsset(UQuakeWadAsset* Wa);
 	void RemoveWad(UQuakeWadAsset* Wa);
 	UTexture2D* FindTexture(FName Name);

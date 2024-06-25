@@ -4,33 +4,35 @@ using UnrealBuildTool;
 
 public class QUnrealED : ModuleRules
 {
-    public QUnrealED(ReadOnlyTargetRules Target) : base(Target)
+    public QUnrealED(ReadOnlyTargetRules target) : base(target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "Core", "UnrealEd",
+                "Core", "UnrealEd"
             }
         );
 
+        
+        PublicIncludePaths.AddRange( new string[] {Path.Combine(ModuleDirectory, "qformats", "include")});
+
+        
         PrivateDependencyModuleNames.AddRange(
             new string[]
             {
                 "CoreUObject",
                 "Engine",
+                "AssetRegistry",
                 "Slate",
                 "SlateCore",
-                "AssetTools",
                 "RawMesh",
                 "QUnreal",
                 "DeveloperSettings",
-                "AssetRegistry"
+                
             }
         );
-        
-        PublicIncludePaths.AddRange( new string[] {Path.Combine(ModuleDirectory, "qformats", "include")});
         
         CppStandard = CppStandardVersion.Cpp20;
 

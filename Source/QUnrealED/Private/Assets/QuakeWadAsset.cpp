@@ -1,5 +1,5 @@
 #include "Assets/QuakeWadAsset.h"
-#include "Assets/AssetHelper.h"
+
 
 UQuakeWadAsset::UQuakeWadAsset() {}
 
@@ -37,10 +37,9 @@ FWadManager* FWadManager::GetInstance()
 	return FWadManager::Instance;
 }
 
-void FWadManager::Refresh()
+void FWadManager::Refresh(const FAssetRegistryModule &AssetRegistryModule)
 {
 	TArray<FAssetData> ObjectList;
-	FAssetRegistryModule AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));;
 	AssetRegistryModule.Get().GetAssetsByPaths({"/Game"}, ObjectList, true);
 	for (const auto& Obj : ObjectList)
 	{

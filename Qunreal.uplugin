@@ -24,11 +24,6 @@
 			"Name": "QUnrealED",
 			"Type": "Editor",
 			"LoadingPhase": "Default"
-		},
-		{
-			"Name": "QUnrealED",
-			"Type": "Editor",
-			"LoadingPhase": "Default"
 		}
 	]
 }

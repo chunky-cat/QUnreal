@@ -15,13 +15,13 @@ struct FEntity
 {
 	GENERATED_USTRUCT_BODY()
 	
-	UPROPERTY(VisibleAnywhere) TEnumAsByte<EEntityType> Type;
-	UPROPERTY(EditAnywhere) FString UniqueClassName;
-	UPROPERTY(VisibleAnywhere) FString ClassName;
-	UPROPERTY(VisibleAnywhere) FVector3d Origin;
-	UPROPERTY(VisibleAnywhere) float Angle;
-	UPROPERTY(VisibleAnywhere) TMap<FString,FString> Properties;
-	UPROPERTY(VisibleAnywhere) TSubclassOf<AActor> ClassTemplate;
+	UPROPERTY(VisibleAnywhere) TEnumAsByte<EEntityType> Type = EntityType_Point;
+	UPROPERTY(EditAnywhere) FString UniqueClassName = "";
+	UPROPERTY(VisibleAnywhere) FString ClassName = "";
+	UPROPERTY(VisibleAnywhere) FVector3d Origin{};
+	UPROPERTY(VisibleAnywhere) float Angle = 0;
+	UPROPERTY(VisibleAnywhere) TMap<FString,FString> Properties{};
+	UPROPERTY(VisibleAnywhere) TSubclassOf<AActor> ClassTemplate = nullptr;
 };
 
 USTRUCT()

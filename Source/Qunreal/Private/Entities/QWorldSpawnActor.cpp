@@ -45,7 +45,7 @@ void AQWorldSpawnActor::OnConstruction(const FTransform& Transform)
 
 void AQWorldSpawnActor::ReloadFromAsset()
 {
-	if (!MapData->IsValidLowLevel() && !MapData->WorldSpawnMesh)
+	if (!MapData->IsValidLowLevel() || !MapData->WorldSpawnMesh->IsValidLowLevel())
 	{
 		return;
 	}

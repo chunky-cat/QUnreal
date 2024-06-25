@@ -14,5 +14,5 @@ struct FWadTexture2D
 	UPROPERTY(VisibleAnywhere) FString OriginalName;
 	UPROPERTY(VisibleAnywhere) FString CleanName;
 	UPROPERTY(VisibleAnywhere) FString WadName;
-	UPROPERTY(VisibleAnywhere) UTexture2D *Texture;
+	UPROPERTY(VisibleAnywhere) UTexture2D *Texture = nullptr;
 };
