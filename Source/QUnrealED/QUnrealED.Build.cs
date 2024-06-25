@@ -26,7 +26,7 @@ public class QUnrealED : ModuleRules
                 "RawMesh",
                 "QUnreal",
                 "DeveloperSettings",
-                "EditorFramework"
+                "AssetRegistry"
             }
         );
         
