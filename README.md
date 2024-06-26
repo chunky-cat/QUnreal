@@ -4,6 +4,8 @@
 
 The Plugin is currently in Beta stage. Please report any bugs ;-)
 
+<img src="https://github.com/chunky-cat/Qunity/blob/main/.media/logo.png?raw=true" alt="qunreal_logo" width="60%" height=60%/>
+
 ## Installation:
 
 * Create a folder named `Plugins` in your project if you don't already have one.
