@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Entities/QEntityActor.h"
 #include "QuakeMapData.generated.h"
 
 UENUM()

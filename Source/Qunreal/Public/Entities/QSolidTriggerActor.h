@@ -1,6 +1,5 @@
 #pragma once
 #include "QSolidEntityActor.h"
-#include "QWorldSpawnActor.h"
 #include "QSolidTriggerActor.generated.h"
 
 UCLASS(Blueprintable)
@@ -8,9 +7,14 @@ class QUNREAL_API AQSolidTriggerActor : public AQSolidEntityActor
 {
 	GENERATED_BODY()
 public:
+	AQSolidTriggerActor();
 	virtual void Setup() override;
+	UFUNCTION()
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
+protected:
+	virtual void BeginPlay() override;
+	
 	UPROPERTY(EditAnywhere, Category="Trigger")
 	bool bOnce = false;
 	UPROPERTY(EditAnywhere, Category="Trigger")

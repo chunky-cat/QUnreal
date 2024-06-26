@@ -11,7 +11,7 @@ struct FTriggerTargets
 	GENERATED_BODY()
 
 	UPROPERTY(VisibleAnywhere)
-	TArray<AQSolidEntityActor*> Targets;
+	TArray<AActor*> Targets;
 };
 
 UCLASS()
@@ -45,4 +45,5 @@ public:
 private:
 	bool bAlreadyPostRegistered = false;
 	void ImportPointEntity(const FEntity &Entity);
+	void SetupEntityComponent(AActor* Actor, FName Name, const FEntity& Entity);
 };

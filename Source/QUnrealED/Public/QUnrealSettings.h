@@ -24,10 +24,10 @@ struct QUNREALED_API FQuakeMapAssetOptions
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere)
-	UQEntityClassesData* EntityClassOverrides;
+	UQEntityClassesData* EntityClassOverrides = nullptr;
 	
 	UPROPERTY(EditAnywhere)
-	UMaterial *BaseMaterial;
+	UMaterial *BaseMaterial = nullptr;
 	
 	UPROPERTY(EditAnywhere)
 	float InverseScale = 1;

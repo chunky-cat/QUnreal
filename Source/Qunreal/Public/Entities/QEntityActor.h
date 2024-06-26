@@ -33,32 +33,39 @@ struct FQEntityData
 
 
 UINTERFACE(Blueprintable, BlueprintType)
-class QUNREAL_API UQEntityInitiator : public UInterface
+class QUNREAL_API UQEntityEvents : public UInterface
 {
 	GENERATED_BODY()
 };
 
-class QUNREAL_API IQEntityInitiator
+class QUNREAL_API IQEntityEvents
+{
+	GENERATED_BODY()
+
+public:
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable,  Category = "QUnreal")
+	void OnTriggered(AActor* TriggerActor, AQEntityActor* Caller);
+};
+
+UCLASS(ClassGroup=(Custom), Blueprintable, BlueprintType, meta=(BlueprintSpawnableComponent))
+class UQEntityComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
 	void Initialize();
-	virtual void Setup();
-	virtual FQEntityData& GetEntityData() = 0;
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
+	FQEntityData EntityData;
 };
 
 UCLASS(Blueprintable)
-class QUNREAL_API AQEntityActor : public AActor, public IQEntityInitiator
+class QUNREAL_API AQEntityActor : public AActor, public IQEntityEvents
 {
 		GENERATED_BODY()
 public:
 	AQEntityActor();
-	virtual FQEntityData& GetEntityData() override {return EntityData;}
-		
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
-	FQEntityData EntityData;
 
-	UFUNCTION(BlueprintImplementableEvent,  Category = "QUnreal")
-	void OnTriggered(AActor* TriggerActor, AQEntityActor* Caller);
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, DisplayName="QUnreal Entity Component")
+	UQEntityComponent *EntityComponent;
+	virtual void Setup();
 };

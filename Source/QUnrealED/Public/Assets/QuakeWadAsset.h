@@ -17,8 +17,10 @@ public:
 	virtual ~UQuakeWadAsset() override;
 	void LoadWadFromFile(FString FileName);
 public:
-	UPROPERTY(VisibleAnywhere) FString SourceQWadFile;
-	UPROPERTY(VisibleAnywhere) TArray<FWadTexture2D> Textures;
+	UPROPERTY(VisibleAnywhere)
+	FString SourceQWadFile;
+	UPROPERTY(EditAnywhere, meta=(TitleProperty = "CleanName"))
+	TArray<FWadTexture2D> Textures;
 private:
 	qformats::wad::qwad_ptr WadFile;
 	bool bAlreadyInManager = false;

@@ -93,26 +93,11 @@ void AQWorldSpawnActor::ReloadFromAsset()
 		FActorLabelUtilities::SetActorLabelUnique(EntityActor, MeshStr);
 		EntityActor->SetPivotOffset(Entity.Pivot);
 #endif
-		
-		EntityActor->GetEntityData().EntityName = (*MeshStr);
-		EntityActor->GetEntityData().ClassName = Entity.ClassName;
-		EntityActor->GetEntityData().Properties = Entity.Properties;
-		EntityActor->GetEntityData().Angle = Entity.Angle;
+		SetupEntityComponent(EntityActor, *MeshStr, Entity);
 		EntityActor->EntityMeshComponent->SetStaticMesh(Entity.Mesh);
-		EntityActor->Initialize();
-
 		EntityActor->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
+		EntityActor->Setup();
 		SolidEntities.Emplace(EntityActor);
-		if (EntityActor->EntityData.TargetName != "")
-		{
-			if (TriggerTargets.Contains(EntityActor->EntityData.TargetName))
-			{
-				TriggerTargets[EntityActor->EntityData.TargetName].Targets.Add(EntityActor);
-			} else
-			{
-				TriggerTargets.Add(EntityActor->EntityData.TargetName, {{EntityActor}});
-			}
-		}
 	}
 
 	for (int i = 0;  i < MapData->PointEntities.Num(); i++)
@@ -143,7 +128,7 @@ void AQWorldSpawnActor::PostRegisterAllComponents()
 
 void AQWorldSpawnActor::ImportPointEntity(const FEntity& Entity)
 {
-	auto MeshStr = FString("AP_"+Entity.UniqueClassName);
+	auto Name = FString("AP_"+Entity.UniqueClassName);
 	FActorSpawnParameters p;
 	p.Owner = this;
 
@@ -155,6 +140,8 @@ void AQWorldSpawnActor::ImportPointEntity(const FEntity& Entity)
 		return;
 	}
 
+	SetupEntityComponent(PtActor, *Name, Entity);	
+	
 	auto Angle = Entity.Angle;
 	if (Angle != 270 && Angle != 90)
 	{
@@ -163,24 +150,38 @@ void AQWorldSpawnActor::ImportPointEntity(const FEntity& Entity)
 	
 	PtActor->SetActorRotation(FRotator(0,Angle,0));
 	
-	/*
-	float Brightness = 300;
-	if (LightEntity.Properties.Contains("light"))
-	{
-		Brightness = FCString::Atof(*LightEntity.Properties["light"]);
-	}
-
-	Brightness = Brightness/MapData->InverseScale;
-	PtLight->SetRadius(Brightness*6);
-	PtLight->SetBrightness(Brightness*0.7);
-	*/
 #if WITH_EDITOR
-	FActorLabelUtilities::SetActorLabelUnique(PtActor, MeshStr);
+	FActorLabelUtilities::SetActorLabelUnique(PtActor, Name);
 #endif
 
 	PtActor->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
 	//PtActor->SetMobility(EComponentMobility::Static);
 	PointEntities.Emplace(PtActor);
+}
+
+void AQWorldSpawnActor::SetupEntityComponent(AActor* Actor, FName Name, const FEntity& Entity)
+{
+	auto EntityComponent = Actor->FindComponentByClass<UQEntityComponent>();
+	if (EntityComponent->IsValidLowLevel())
+	{
+		EntityComponent->EntityData.EntityName = (Name);
+		EntityComponent->EntityData.ClassName = Entity.ClassName;
+		EntityComponent->EntityData.Properties = Entity.Properties;
+		EntityComponent->EntityData.Angle = Entity.Angle;
+		EntityComponent->Initialize();
+		
+		if (Actor->GetClass()->ImplementsInterface(UQEntityEvents::StaticClass()) &&
+			EntityComponent->EntityData.TargetName != "")
+		{
+			if (TriggerTargets.Contains(EntityComponent->EntityData.TargetName))
+			{
+				TriggerTargets[EntityComponent->EntityData.TargetName].Targets.Add(Actor);
+			} else
+			{
+				TriggerTargets.Add(EntityComponent->EntityData.TargetName, {{Actor}});
+			}
+		}
+	}
 }
 
 void AQWorldSpawnActor::OnQuakeMapUpdated()

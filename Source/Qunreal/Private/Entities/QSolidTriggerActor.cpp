@@ -1,5 +1,9 @@
 #include "Entities/QSolidTriggerActor.h"
+#include "Entities/QWorldSpawnActor.h"
 
+AQSolidTriggerActor::AQSolidTriggerActor()
+{
+}
 
 void AQSolidTriggerActor::Setup()
 {
@@ -11,31 +15,37 @@ void AQSolidTriggerActor::Setup()
 	EntityMeshComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 	EntityMeshComponent->bHiddenInGame = true;
 
-	bOnce = EntityData.ClassName.Contains("once");
-	bTeleport = EntityData.ClassName.Contains("teleport");
-	if (EntityData.Properties.Contains("target"))
+	bOnce = EntityComponent->EntityData.ClassName.Contains("once");
+	bTeleport = EntityComponent->EntityData.ClassName.Contains("teleport");
+	if (EntityComponent->EntityData.Properties.Contains("target"))
 	{
-		TriggerTarget = EntityData.Properties["target"];	
+		TriggerTarget = EntityComponent->EntityData.Properties["target"];	
 	}
+
+}
+
+void AQSolidTriggerActor::BeginPlay()
+{
 }
 
 void AQSolidTriggerActor::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	AQWorldSpawnActor* WorldSpawn = Cast<AQWorldSpawnActor>(GetOwner());
-	if (WorldSpawn == nullptr || !WorldSpawn->TriggerTargets.Contains(TriggerTarget))
+	if (WorldSpawn != nullptr && 	WorldSpawn->TriggerTargets.Contains(TriggerTarget))
 	{
-		Super::NotifyActorBeginOverlap(OtherActor);
-		return;
+		for (const auto &Targets = WorldSpawn->TriggerTargets[TriggerTarget].Targets; const auto &Target : Targets)
+		{
+			if (Target == nullptr)
+			{
+				continue;
+			}
+
+			if (Target->GetClass()->ImplementsInterface(UQEntityEvents::StaticClass()))
+			{
+				Execute_OnTriggered(Target, OtherActor, this);
+			}
+		}
 	}
 
-	for (const auto &Targets = WorldSpawn->TriggerTargets[TriggerTarget].Targets; const auto &Target : Targets)
-	{
-		if (Target == nullptr)
-		{
-			continue;
-		}
-		Target->OnTriggered(OtherActor, this);
-	}
-	
 	Super::NotifyActorBeginOverlap(OtherActor);
 }

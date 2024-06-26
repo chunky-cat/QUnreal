@@ -1,24 +1,23 @@
 #include "Entities/QEntityActor.h"
 
-void IQEntityInitiator::Initialize()
+void UQEntityComponent::Initialize()
 {
-	if (GetEntityData().Properties.Contains("targetname"))
+	if (EntityData.Properties.Contains("targetname"))
 	{
-		GetEntityData().TargetName = GetEntityData().Properties["targetname"];	
+		EntityData.TargetName = EntityData.Properties["targetname"];	
 	}
-	if (GetEntityData().Properties.Contains("message"))
+	if (EntityData.Properties.Contains("message"))
 	{
-		GetEntityData().Message = GetEntityData().Properties["message"];	
+		EntityData.Message = EntityData.Properties["message"];	
 	}
-
-	Setup();
 }
 
-void IQEntityInitiator::Setup()
+void AQEntityActor::Setup()
 {
 	
 }
 
 AQEntityActor::AQEntityActor()
 {
+	EntityComponent = CreateDefaultSubobject<UQEntityComponent>(TEXT("QUnrealEntityComponent"));
 }
