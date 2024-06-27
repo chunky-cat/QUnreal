@@ -2,8 +2,6 @@
 
 ### Quake (Trenchbroom) Map and WAD importer for Unreal 5.
 
-The Plugin is currently in Beta stage. Please report any bugs ;-)
-
 <img src="https://github.com/chunky-cat/QUnreal/blob/main/.media/logo.png?raw=true" alt="qunreal_logo" width="60%" height=60%/>
 
 ## Installation:
@@ -15,6 +13,8 @@ The Plugin is currently in Beta stage. Please report any bugs ;-)
 git clone https://github.com/chunky-cat/QUnreal && git submodule update --init
 ```
 * Activate the QUnreal Plugin via editor or your project config file.
+
+## Documentation:
 
 [Read the Wiki](https://github.com/chunky-cat/QUnreal/wiki)
 
@@ -28,5 +28,6 @@ git clone https://github.com/chunky-cat/QUnreal && git submodule update --init
 
 * import brushes with clip texture as colliders
 * more options for setting the entity pivot
+* add "reload" button into the map asset context menu
 * support reimporting WAD files
 * option to import textures from WAD to a separate folder for easier access
