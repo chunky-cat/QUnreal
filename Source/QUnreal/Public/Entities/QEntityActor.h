@@ -44,7 +44,7 @@ class QUNREAL_API IQEntityEvents
 
 public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable,  Category = "QUnreal")
-	void OnTriggered(AActor* TriggerActor, AQEntityActor* Caller);
+	void OnEntityGotTriggered(AActor* OtherActor, AQEntityActor* TriggerActor);
 };
 
 UCLASS(ClassGroup=(Custom), Blueprintable, BlueprintType, meta=(BlueprintSpawnableComponent))

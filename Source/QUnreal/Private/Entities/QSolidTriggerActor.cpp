@@ -42,7 +42,7 @@ void AQSolidTriggerActor::NotifyActorBeginOverlap(AActor* OtherActor)
 
 			if (Target->GetClass()->ImplementsInterface(UQEntityEvents::StaticClass()))
 			{
-				Execute_OnTriggered(Target, OtherActor, this);
+				Execute_OnEntityGotTriggered(Target, OtherActor, this);
 			}
 		}
 	}
