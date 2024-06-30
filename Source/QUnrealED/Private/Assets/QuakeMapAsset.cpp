@@ -417,8 +417,8 @@ void UQuakeMapAsset::FillCacheFromTextures(qformats::map::QMap* NativeMap)
 			paramInfo.Name = FScriptName("BaseTexture");
 			for (const auto& Obj : ObjectList)
 			{
-				if (Obj.GetClass() == UMaterial::StaticClass() && FString(TexName.c_str()) == FPaths::GetBaseFilename(
-					Obj.GetFullName()))
+				auto CleanName = FWadTexture2D::ToCleanName(FString(TexName.c_str()));
+				if (Obj.GetClass() == UMaterial::StaticClass() && CleanName == FPaths::GetBaseFilename(Obj.GetFullName()))
 				{
 					Material = Cast<UMaterial>(Obj.GetAsset());
 					UTexture* TmpTex = nullptr;

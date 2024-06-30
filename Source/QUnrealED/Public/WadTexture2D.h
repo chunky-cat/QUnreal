@@ -11,6 +11,7 @@ struct FWadTexture2D
 
 	void SetName(FString Name);
 	void Generate(const FString &PackagePath, const qformats::wad::QuakeTexture *Qtex);
+	static FString ToCleanName(const FString &OriginalName);
 	
 	UPROPERTY(VisibleAnywhere) FString OriginalName;
 	UPROPERTY(VisibleAnywhere) FString CleanName;

@@ -7,13 +7,8 @@
 void FWadTexture2D::SetName(FString Name)
 {
 	OriginalName = Name;
-	CleanName = OriginalName;
-	if (OriginalName[0] == '+' || OriginalName[0] == '*')
-	{
-		CleanName = OriginalName.RightChop(1);
-	}
+	CleanName = ToCleanName(OriginalName);
 }
-
 
 void FWadTexture2D::Generate(const FString &PackagePath, const qformats::wad::QuakeTexture *Qtex)
 {
@@ -58,4 +53,15 @@ void FWadTexture2D::Generate(const FString &PackagePath, const qformats::wad::Qu
 	Texture->Filter = TF_Nearest;
 	Texture->UpdateResource();
 	Texture->MarkPackageDirty();
+}
+
+FString FWadTexture2D::ToCleanName(const FString &OriginalName)
+{
+	FString RetName = OriginalName;
+	if (OriginalName[0] == '+' || OriginalName[0] == '*')
+	{
+		RetName = OriginalName.RightChop(1);
+	}
+
+	return RetName;
 }
