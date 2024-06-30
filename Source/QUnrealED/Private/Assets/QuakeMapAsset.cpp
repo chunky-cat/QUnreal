@@ -333,18 +333,22 @@ void UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEntityPtr& E
 
 	builder.SetInverseScale(Options.InverseScale);
 	builder.ProcessEntity(Entity);
+
+	if (!builder.HasRenderMesh())
+	{
+		return;
+	}
 	
 	auto entCenter = Entity->GetCenter();
 	OutEntity.Center = FVector3d(-entCenter.x(), entCenter.y(), entCenter.z()) / Options.InverseScale;
 	OutEntity.Pivot = FVector3d(-Pivot.x(), Pivot.y(), Pivot.z()) / Options.InverseScale;
 	
 	auto MapName = FPaths::GetBaseFilename(SourceQMapFile);
-
-
+	
 	FString MeshName = GetUniqueEntityName(Entity.get()->ClassName());
 	OutEntity.UniqueClassName = FString(MeshName);
 	FString PackagePath = this->GetPackage()->GetPathName();
-
+	
 	if (bImportAsStaticMeshLib)
 	{
 		if (!Entity->tbName.empty())
@@ -364,15 +368,12 @@ void UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEntityPtr& E
 	FAssetRegistryModule::AssetCreated(Mesh);
 	builder.SetupRenderSourceModel(Mesh, Options.LightMapDivider, Options.MaxLightmapSize);
 
-	if (!bImportAsStaticMeshLib) {
+	if (!bImportAsStaticMeshLib && builder.HasClipMesh()) {
+
 		UStaticMesh* ClipMesh = NewObject<UStaticMesh>(Pkg, *MeshName.Append("_Clip"), RF_Public | RF_Standalone | RF_MarkAsRootSet);
 		FAssetRegistryModule::AssetCreated(ClipMesh);
 		builder.SetupClippingSourceModel(ClipMesh);
 		OutEntity.ClipMesh = ClipMesh;
-	}
-	
-	if (!bImportAsStaticMeshLib && OutEntity.ClipMesh->IsValidLowLevelFast())
-	{
 		OutEntity.ClipMesh->PostEditChange();
 	}
 	OutEntity.Mesh = Mesh;

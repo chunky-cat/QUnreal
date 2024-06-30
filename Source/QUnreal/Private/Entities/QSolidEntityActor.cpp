@@ -7,26 +7,34 @@ AQSolidEntityActor::AQSolidEntityActor()
 	RootComponent = EntityMeshComponent;
 	ClipMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ClipMesh"));
 	ClipMeshComponent->bHiddenInGame = true;
+	ClipMeshComponent->SetActive(false);
 	PrimaryActorTick.bCanEverTick = false;
 }
 
 void AQSolidEntityActor::Setup()
 {
-	if (EntityMeshComponent->GetStaticMesh()->IsValidLowLevelFast() && EntityMeshComponent->GetStaticMesh()->GetNumSourceModels() > 0)
+	if (EntityMeshComponent->GetStaticMesh()->IsValidLowLevelFast() && EntityMeshComponent->GetStaticMesh()->IsSourceModelValid(0))
 	{
 		EntityMeshComponent->UpdateCollisionFromStaticMesh();
 		EntityMeshComponent->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
 		EntityMeshComponent->SetMobility(Mobility);
 		EntityMeshComponent->SetVisibility(true);
 		EntityMeshComponent->bHiddenInGame = false;
+	} else
+	{
+		EntityMeshComponent->UnregisterComponent();
 	}
 
-	if (ClipMeshComponent->GetStaticMesh()->IsValidLowLevelFast() && ClipMeshComponent->GetStaticMesh()->GetNumSourceModels() > 0)
+	if (ClipMeshComponent->GetStaticMesh()->IsValidLowLevelFast() && ClipMeshComponent->GetStaticMesh()->IsSourceModelValid(0))
 	{
+		ClipMeshComponent->SetActive(true);
 		ClipMeshComponent->UpdateCollisionFromStaticMesh();
 		ClipMeshComponent->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
 		ClipMeshComponent->SetMobility(Mobility);
 		ClipMeshComponent->SetVisibility(true);
 		ClipMeshComponent->bHiddenInGame = true;
+	} else
+	{
+		ClipMeshComponent->UnregisterComponent();
 	}
 }

@@ -16,6 +16,8 @@ public:
 	void ProcessEntity(const qformats::map::SolidEntityPtr &Entity);
 	void SetupRenderSourceModel(UStaticMesh *Mesh, float LightMapDivider, float MaxLightmapSize );
 	void SetupClippingSourceModel(UStaticMesh *Mesh);
+	bool HasClipMesh() const {return bHasClipMesh; }
+	bool HasRenderMesh() const {return RenderMesh.VertexPositions.Num() > 0;}
 	double GetAreaEstimate() const { return AreaEstimate; }
 private:
 	void AddFacetoRawMesh(const qformats::map::FacePtr &Face, FRawMesh &RawMesh);
@@ -25,6 +27,7 @@ private:
 	fvec3 VertOffset{};
 	double AreaEstimate = 0;
 	float InverseScale = 1;
+	bool bHasClipMesh = false;
 	TArray<UMaterialInstanceDynamic*> TempMaterials;
 	TMap<int32_t, int32_t> MatIDMap;
 	int OffsetIndex = 0;

@@ -35,6 +35,7 @@ void FQMeshBuilder::ProcessEntity(const qformats::map::SolidEntityPtr& Entity)
 		{
 			if (Face->Type() == qformats::map::Face::CLIP)
 			{
+				bHasClipMesh = true;
 				AddFacetoRawMesh(Face, ClipMesh);
 			}
 		}
@@ -197,7 +198,7 @@ void FQMeshBuilder::SetupClippingSourceModel(UStaticMesh* Mesh)
 	SrcModel.RawMeshBulkData->SaveRawMesh(ClipMesh);
 	SrcModel.CreateSubObjects(Mesh);
 
-	Mesh->ImportVersion = EImportStaticMeshVersion::LastVersion;
+	Mesh->ImportVersion = LastVersion;
 	Mesh->SetLightMapResolution(0);
 	Mesh->bCustomizedCollision = false;
 	Mesh->ComplexCollisionMesh = Mesh;

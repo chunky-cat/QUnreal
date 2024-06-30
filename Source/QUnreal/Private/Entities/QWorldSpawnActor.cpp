@@ -47,7 +47,10 @@ void AQWorldSpawnActor::ReloadFromAsset()
 	}
 
 	WorldSpawnMeshComponent->SetStaticMesh(MapData->WorldSpawn.Mesh);
-	WorldSpawnClipMeshComponent->SetStaticMesh(MapData->WorldSpawn.ClipMesh);
+	if (MapData->WorldSpawn.ClipMesh != nullptr && MapData->WorldSpawn.ClipMesh->IsValidLowLevelFast())
+	{
+		WorldSpawnClipMeshComponent->SetStaticMesh(MapData->WorldSpawn.ClipMesh);
+	}
 	SetupMeshComponent();
 	SetPivotOffset(MapData->WorldSpawn.Pivot);
 
@@ -124,23 +127,30 @@ void AQWorldSpawnActor::PostRegisterAllComponents()
 
 void AQWorldSpawnActor::SetupMeshComponent() const
 {
-	if (MapData->IsValidLowLevel() && WorldSpawnMeshComponent->GetStaticMesh() != nullptr)
+	if (MapData->IsValidLowLevel())
 	{
-		if (WorldSpawnMeshComponent->GetStaticMesh()->GetNumSourceModels() > 0)
+		auto RenderMesh = WorldSpawnMeshComponent->GetStaticMesh();
+		if (RenderMesh && RenderMesh->IsValidLowLevelFast() && RenderMesh->IsSourceModelValid(0))
 		{
 			WorldSpawnMeshComponent->SetMobility(EComponentMobility::Static);
 			WorldSpawnMeshComponent->SetStaticMesh(MapData->WorldSpawn.Mesh);
 			WorldSpawnMeshComponent->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
 			WorldSpawnMeshComponent->UpdateCollisionFromStaticMesh();
+		} else
+		{
+			WorldSpawnMeshComponent->UnregisterComponent();
 		}
-		if (WorldSpawnClipMeshComponent->GetStaticMesh()->IsValidLowLevelFast() && WorldSpawnClipMeshComponent->
-			GetStaticMesh()->GetNumSourceModels() > 0)
+
+		auto ClipMesh = WorldSpawnClipMeshComponent->GetStaticMesh();
+		if (ClipMesh && ClipMesh->IsValidLowLevelFast() && ClipMesh->IsSourceModelValid(0))
 		{
 			WorldSpawnClipMeshComponent->SetMobility(EComponentMobility::Static);
 			WorldSpawnClipMeshComponent->SetStaticMesh(MapData->WorldSpawn.ClipMesh);
-			WorldSpawnClipMeshComponent->GetBodySetup()->CollisionTraceFlag =
-				ECollisionTraceFlag::CTF_UseComplexAsSimple;
+			WorldSpawnClipMeshComponent->GetBodySetup()->CollisionTraceFlag = CTF_UseComplexAsSimple;
 			WorldSpawnClipMeshComponent->UpdateCollisionFromStaticMesh();
+		} else
+		{
+			WorldSpawnClipMeshComponent->UnregisterComponent();
 		}
 	}
 }
