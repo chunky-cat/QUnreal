@@ -26,8 +26,5 @@ git clone https://github.com/chunky-cat/QUnreal && git submodule update --init
 
 ## TODO:
 
-* import brushes with clip texture as colliders
 * more options for setting the entity pivot
 * add "reload" button into the map asset context menu
-* support reimporting WAD files
-* option to import textures from WAD to a separate folder for easier access
