@@ -23,50 +23,70 @@ struct QUNREALED_API FQuakeMapAssetOptions
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="General")
 	UQEntityClassesData* EntityClassOverrides = nullptr;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="General")
 	UMaterial *BaseMaterial = nullptr;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="General")
 	float InverseScale = 1;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="General")
 	TEnumAsByte<EQuakeEntityPivot> DefaultPivot = Lower_Left;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="LightMap")
 	float MaxLightmapSize = 512;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="LightMap")
 	float LightMapDivider = 2600;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Materials and Textures")
 	FName TextureFolder = "";
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Materials and Textures")
 	FName MaterialOverrideFolder = "";
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Materials and Textures")
 	FString SkipTexture = "skip";
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Materials and Textures")
 	FString ClipTexture = "clip";
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Materials and Textures")
 	FString SkyTexture = "sky";
 };
 
 
+USTRUCT(Blueprintable)
+struct QUNREALED_API FQuakeWadAssetOptions
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditAnywhere, Category="General")
+	bool bExpotTextures = true;
+};
 
-UCLASS(Config=Editor, defaultconfig, meta = (DisplayName="QUnreal"))
-class QUNREALED_API UQUnrealSettings : public UDeveloperSettings
+UCLASS(Config=QUnrealEditorSettings)
+class QUNREALED_API UQUnrealSettings : public UObject
 {
 	GENERATED_BODY()
 
 public:
-	UQUnrealSettings() {};
+	UQUnrealSettings(const FObjectInitializer& Obj) {}
 	
- 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "General")
+ 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly)
 	FQuakeMapAssetOptions MapAssetOptions;
+	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly)
+	FQuakeWadAssetOptions WadAssetOptions;
+	virtual void Serialize(FArchive& Ar) override;
+	UPROPERTY(Config)
+	bool bIsInitialized = false;
 };
+
+// TODO: Maybe not needed
+inline void UQUnrealSettings::Serialize(FArchive& Ar)
+{
+	Ar << bIsInitialized;
+	UObject::Serialize(Ar);
+}
