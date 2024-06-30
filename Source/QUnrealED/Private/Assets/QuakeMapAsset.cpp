@@ -1,4 +1,6 @@
 #include "Assets/QuakeMapAsset.h"
+
+#include "QMeshBuilder.h"
 #include "Assets/QuakeWadAsset.h"
 #include "RawMesh.h"
 #include "Entities/QSolidEntityActor.h"
@@ -178,28 +180,24 @@ void UQuakeMapAsset::LoadMapFromFile(FString fileName)
 		bImportAsStaticMeshLib = true;
 	}
 
-	FVector3d Center{}, Pivot{};
-	MapData->WorldSpawnMesh = ConvertEntityToModel(NativeMap->GetSolidEntities()[0], Center, Pivot);
 	MapData->SolidEntities.Empty();
 	MapData->PointEntities.Empty();
 	EntityClassCount.clear();
 
+	ConvertEntityToModel(NativeMap->GetSolidEntities()[0], MapData->WorldSpawn,Center);
+	
 	for (int i = 1; i < NativeMap->GetSolidEntities().size(); i++)
 	{
 		auto NativeSolidEntity = NativeMap->GetSolidEntities()[i];
 		FSolidEntity NewSolidEntity{};
 		CreateEntityFromNative(&NewSolidEntity, NativeSolidEntity, Options.InverseScale);
-		auto EntityMesh = ConvertEntityToModel(NativeSolidEntity, Center,Pivot);
-		if (EntityMesh == nullptr)
+		ConvertEntityToModel(NativeSolidEntity, NewSolidEntity,Options.DefaultPivot);
+		if (NewSolidEntity.Mesh == nullptr)
 		{
 			continue;
 		}
-		NewSolidEntity.Center = Center / Options.InverseScale;
-		NewSolidEntity.Pivot = Pivot / Options.InverseScale;
-		
-		NewSolidEntity.Mesh = EntityMesh,
-			NewSolidEntity.UniqueClassName = FString(EntityMesh->GetName()),
-			NewSolidEntity.Type = EntityType_Solid;
+
+		NewSolidEntity.Type = EntityType_Solid;
 		NewSolidEntity.ClassTemplate = AQSolidEntityActor::StaticClass();
 		if (Options.EntityClassOverrides != nullptr && Options.EntityClassOverrides->Classes.Contains(
 			NewSolidEntity.ClassName))
@@ -320,115 +318,31 @@ void UQuakeMapAsset::Serialize(FArchive& Ar)
 	UObject::Serialize(Ar);
 }
 
-UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEntityPtr& Entity, FVector3d& OutCenter, FVector3d& OutPivot)
+void UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEntityPtr& Entity, FSolidEntity& OutEntity, EQuakeEntityPivot PivotOpt)
 {
-	FVector3f EmptyVector = FVector3f(0, 0, 0);
-	FColor WhiteVertex = FColor(255, 255, 255, 255);
-	FRawMesh rawMesh;
-	TArray<UMaterialInstanceDynamic*> TempMaterials;
-	int offset_idx = 0, material_idx = 0;
-	TMap<int32_t, int32_t> MatIDMap;
 	auto b0 = Entity.get()->GetClippedBrushes()[0];
 	FVector3d Min(b0.min.x(), b0.min.y(), b0.min.z());
 	FVector3d Max(b0.max.x(), b0.max.y(), b0.max.z());
-	fvec3 Pivot = CalculateEntityPivot(Entity, Options.DefaultPivot);
-	fvec3 VertOffset{};
+	fvec3 Pivot = CalculateEntityPivot(Entity, PivotOpt);
+	FQMeshBuilder builder(Materials);
 
 	if (bImportAsStaticMeshLib)
 	{
-		VertOffset = Pivot;
+		builder.SetVertexOffset(Pivot);
 	}
 
-	double AreaEstimate = 0;
-
-	for (const auto& b : Entity.get()->GetClippedBrushes())
-	{
-		for (const auto& p : b.GetFaces())
-		{
-			const auto& vertices = p->GetVertices();
-			const auto& indices = p->GetIndices();
-
-			if (vertices.size() < 3 || p->Type() != qformats::map::Face::SOLID)
-			{
-				continue;
-			}
-			for (int i = vertices.size() - 1; i >= 0; i--)
-			{
-				auto pt = vertices[i].point;
-				pt -= VertOffset;
-				rawMesh.VertexPositions.Add(FVector3f(
-					-pt[0],
-					pt[1],
-					pt[2]
-				) / Options.InverseScale);
-			}
-
-			for (int i = 0; i < indices.size() - 2; i += 3)
-			{
-				auto endv = vertices.size() - 1;
-				const auto& pt = vertices[endv - indices[i]];
-				const auto& pt2 = vertices[endv - indices[i + 1]];
-				const auto& pt3 = vertices[endv - indices[i + 2]];
-
-				rawMesh.WedgeIndices.Add(indices[i] + offset_idx);
-				rawMesh.WedgeIndices.Add(indices[i + 1] + offset_idx);
-				rawMesh.WedgeIndices.Add(indices[i + 2] + offset_idx);
-
-				rawMesh.WedgeColors.Add(WhiteVertex);
-				rawMesh.WedgeColors.Add(WhiteVertex);
-				rawMesh.WedgeColors.Add(WhiteVertex);
-
-				rawMesh.WedgeTexCoords[0].Add(FVector2f(pt.uv[0], pt.uv[1]));
-				rawMesh.WedgeTexCoords[0].Add(FVector2f(pt2.uv[0], pt2.uv[1]));
-				rawMesh.WedgeTexCoords[0].Add(FVector2f(pt3.uv[0], pt3.uv[1]));
-
-				rawMesh.WedgeTangentX.Add(EmptyVector);
-				rawMesh.WedgeTangentX.Add(EmptyVector);
-				rawMesh.WedgeTangentX.Add(EmptyVector);
-
-				rawMesh.WedgeTangentY.Add(EmptyVector);
-				rawMesh.WedgeTangentY.Add(EmptyVector);
-				rawMesh.WedgeTangentY.Add(EmptyVector);
-
-				rawMesh.WedgeTangentZ.Add(FVector3f(pt.normal[0], pt.normal[1], pt.normal[2]));
-				rawMesh.WedgeTangentZ.Add(FVector3f(pt2.normal[0], pt2.normal[1], pt2.normal[2]));
-				rawMesh.WedgeTangentZ.Add(FVector3f(pt3.normal[0], pt3.normal[1], pt3.normal[2]));
-
-				auto TexID = p->TextureID();
-				if (!MatIDMap.Contains(TexID))
-				{
-					if (TexID < Materials.Num())
-					{
-						TempMaterials.Emplace(Materials[TexID]);
-						MatIDMap.Add(TexID, material_idx++);
-					}
-				}
-				rawMesh.FaceMaterialIndices.Add(MatIDMap[TexID]);
-
-				rawMesh.FaceSmoothingMasks.Add(0);
-			}
-			offset_idx += vertices.size();
-		}
-		auto width = b.max.x() - b.min.x();
-		auto depht = b.max.z() - b.min.z();
-		auto height = b.max.y() - b.min.y();
-		AreaEstimate += (2 * (width * height + width * depht + height * depht));
-	}
-
-	if (rawMesh.VertexPositions.Num() == 0)
-	{
-		return nullptr;
-	}
-
-	rawMesh.CompactMaterialIndices();
+	builder.SetInverseScale(Options.InverseScale);
+	builder.ProcessEntity(Entity);
+	
 	auto entCenter = Entity->GetCenter();
-	OutCenter = FVector3d(-entCenter.x(), entCenter.y(), entCenter.z());
-	OutPivot = FVector3d(-Pivot.x(), Pivot.y(), Pivot.z());
+	OutEntity.Center = FVector3d(-entCenter.x(), entCenter.y(), entCenter.z()) / Options.InverseScale;
+	OutEntity.Pivot = FVector3d(-Pivot.x(), Pivot.y(), Pivot.z()) / Options.InverseScale;
 	
 	auto MapName = FPaths::GetBaseFilename(SourceQMapFile);
 
 
 	FString MeshName = GetUniqueEntityName(Entity.get()->ClassName());
+	OutEntity.UniqueClassName = FString(MeshName);
 	FString PackagePath = this->GetPackage()->GetPathName();
 
 	if (bImportAsStaticMeshLib)
@@ -444,63 +358,24 @@ UStaticMesh* UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEnti
 	}
 
 	UPackage* Pkg = CreatePackage(*PackagePath);
-	UStaticMesh* Mesh = NewObject<UStaticMesh>(Pkg, *MeshName, RF_Public | RF_Standalone | RF_MarkAsRootSet);
-	FAssetRegistryModule::AssetCreated(Mesh);
-
-	for (auto Mat : TempMaterials)
-	{
-		Mesh->AddMaterial(Mat);
-	}
-
 	Pkg->FullyLoad();
 
-	Mesh->AddSourceModel();
-	auto& SrcModel = Mesh->GetSourceModel(0);
-	SrcModel.BuildSettings.bUseHighPrecisionTangentBasis = true;
-	SrcModel.BuildSettings.bRecomputeNormals = true;
-	SrcModel.BuildSettings.bRecomputeTangents = true;
-	SrcModel.BuildSettings.bUseFullPrecisionUVs = true;
-	SrcModel.BuildSettings.bGenerateLightmapUVs = true;
+	UStaticMesh* Mesh = NewObject<UStaticMesh>(Pkg, *MeshName, RF_Public | RF_Standalone | RF_MarkAsRootSet);
+	FAssetRegistryModule::AssetCreated(Mesh);
+	builder.SetupRenderSourceModel(Mesh, Options.LightMapDivider, Options.MaxLightmapSize);
 
-	auto LightMapEstimate = AreaEstimate / Options.LightMapDivider;
-	if (LightMapEstimate > Options.MaxLightmapSize)
-	{
-		LightMapEstimate = Options.MaxLightmapSize;
+	if (!bImportAsStaticMeshLib) {
+		UStaticMesh* ClipMesh = NewObject<UStaticMesh>(Pkg, *MeshName.Append("_Clip"), RF_Public | RF_Standalone | RF_MarkAsRootSet);
+		FAssetRegistryModule::AssetCreated(ClipMesh);
+		builder.SetupClippingSourceModel(ClipMesh);
+		OutEntity.ClipMesh = ClipMesh;
 	}
-
-	if (LightMapEstimate < 32)
+	
+	if (!bImportAsStaticMeshLib && OutEntity.ClipMesh->IsValidLowLevelFast())
 	{
-		LightMapEstimate = 32;
+		OutEntity.ClipMesh->PostEditChange();
 	}
-	SrcModel.BuildSettings.MinLightmapResolution = LightMapEstimate;
-	SrcModel.BuildSettings.DstLightmapIndex = 0;
-	SrcModel.BuildSettings.DstLightmapIndex = 1;
-	SrcModel.BuildSettings.bComputeWeightedNormals = true;
-
-	// Get LODGroup info
-	ITargetPlatformManagerModule& TargetPlatformManager = GetTargetPlatformManagerRef();
-	ITargetPlatform* RunningPlatform = TargetPlatformManager.GetRunningTargetPlatform();
-	check(RunningPlatform);
-
-	const FStaticMeshLODSettings& LODSettings = RunningPlatform->GetStaticMeshLODSettings();
-	const auto& NewGroup = LODSettings.GetLODGroup(NAME_None);
-	SrcModel.ReductionSettings = NewGroup.GetDefaultSettings(0);
-	SrcModel.ReductionSettings.bKeepSymmetry = true;
-	SrcModel.ReductionSettings.bCullOccluded = true;
-
-	SrcModel.RawMeshBulkData->SaveRawMesh(rawMesh);
-	SrcModel.CreateSubObjects(Mesh);
-
-	Mesh->ImportVersion = EImportStaticMeshVersion::LastVersion;
-	Mesh->SetLightMapCoordinateIndex(1);
-	Mesh->SetLightMapResolution(LightMapEstimate);
-	Mesh->bCustomizedCollision = false;
-	Mesh->ComplexCollisionMesh = Mesh;
-	Mesh->Build(true);
-	Mesh->PostEditChange();
-	Mesh->SetLightingGuid();
-
-	return Mesh;
+	OutEntity.Mesh = Mesh;
 }
 
 FString UQuakeMapAsset::GetUniqueEntityName(const std::string& ClassName)

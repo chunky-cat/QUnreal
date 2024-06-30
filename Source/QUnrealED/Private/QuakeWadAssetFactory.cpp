@@ -38,3 +38,26 @@ UObject* UQuakeWadAssetFactory::FactoryCreateFile(UClass* InClass, UObject* InPa
 	UEditorLoadingAndSavingUtils::SavePackages({newWadObj->GetPackage()}, false);
 	return newWadObj;
 }
+
+bool UQuakeWadAssetFactory::CanReimport(UObject* Obj, TArray<FString>& OutFilenames)
+{
+	return Obj->GetClass() == UQuakeWadAsset::StaticClass();
+}
+
+void UQuakeWadAssetFactory::SetReimportPaths(UObject* Obj, const TArray<FString>& NewReimportPaths)
+{
+	auto ReimportMap = static_cast<UQuakeWadAsset*>(Obj);
+	if (ReimportMap != nullptr)
+	{
+		ReimportMap->SourceQWadFile = NewReimportPaths[0];
+		ReimportMap->Modify();
+	}
+}
+
+EReimportResult::Type UQuakeWadAssetFactory::Reimport(UObject* Obj)
+{
+	UQuakeWadAsset* newWadObj = Cast<UQuakeWadAsset>(Obj);
+	newWadObj->LoadWadFromFile(newWadObj->SourceQWadFile);
+	UEditorLoadingAndSavingUtils::SavePackages({newWadObj->GetPackage()}, false);
+	return EReimportResult::Succeeded;
+}

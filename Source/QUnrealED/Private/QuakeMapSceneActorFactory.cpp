@@ -59,6 +59,7 @@ AActor* UQuakeMapSceneActorFactory::SpawnActor(UObject* InAsset, ULevel* InLevel
 
 	auto MapAsset = Cast<UQuakeMapAsset>(InAsset);
 	actor->MapData = MapAsset->MapData;
+	actor->SetPivotOffset(MapAsset->MapData->WorldSpawn.Pivot);
 	
 	if (actor->HasAnyFlags(RF_Transient))
 	{

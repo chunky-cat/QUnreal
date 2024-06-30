@@ -15,5 +15,8 @@ public:
 	TEnumAsByte<EComponentMobility::Type> Mobility = EComponentMobility::Static;
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 	UStaticMeshComponent* EntityMeshComponent;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UStaticMeshComponent* ClipMeshComponent;
+	
 	virtual void Setup() override;
 };

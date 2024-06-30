@@ -12,6 +12,8 @@ UQuakeWadAsset::~UQuakeWadAsset()
 void UQuakeWadAsset::LoadWadFromFile(FString FileName)
 {
 	this->SourceQWadFile = FileName;
+	Textures.Empty();
+	
 	auto WadBaseFileName = FPaths::GetBaseFilename(FileName);
 	WadFile = qformats::wad::QuakeWad::FromFile(std::string(TCHAR_TO_UTF8(*FileName)));
 	
@@ -23,18 +25,26 @@ void UQuakeWadAsset::LoadWadFromFile(FString FileName)
 		const auto qtex = WadFile->GetTexture(Tex.first);
 		auto Utex = FWadTexture2D();
 		Utex.WadName = WadBaseFileName;
-		Utex.Generate(GetPackage()->GetPathName(),FString(Tex.first.c_str()), qtex);
+		Utex.SetName(FString(Tex.first.c_str()));
+		auto PackagePath = GetPackage()->GetPathName();
+		if (bExternalTextures)
+		{
+			PackagePath = FPaths::GetPath(this->GetPathName());
+			FString BaseName = FPaths::GetBaseFilename(this->GetPathName());
+			PackagePath = FPaths::Combine(PackagePath, WadBaseFileName + "_Textures", Utex.CleanName);
+		}
+		Utex.Generate(PackagePath, qtex);
 		Textures.Emplace(Utex);
 	}
 }
 
 FWadManager* FWadManager::GetInstance()
 {
-	if (FWadManager::Instance == nullptr)
+	if (Instance == nullptr)
 	{
-		FWadManager::Instance = new FWadManager();
+		Instance = new FWadManager();
 	}
-	return FWadManager::Instance;
+	return Instance;
 }
 
 void FWadManager::Refresh(const FAssetRegistryModule &AssetRegistryModule)
@@ -49,7 +59,6 @@ void FWadManager::Refresh(const FAssetRegistryModule &AssetRegistryModule)
 			AddWadAsset(w);
 		}
 	}
-	
 }
 
 
@@ -64,7 +73,10 @@ void FWadManager::AddWadAsset(UQuakeWadAsset* Wa)
 
 void FWadManager::RemoveWad(UQuakeWadAsset* Wa)
 {
-	if (Wa == nullptr) return;
+	if (Wa == nullptr)
+	{
+		return;
+	}
 	if (const auto Elem = std::ranges::find(WadAssets, Wa); Elem != WadAssets.end())
 	{
 		WadAssets.erase(Elem);
@@ -82,7 +94,7 @@ UTexture2D* FWadManager::FindTexture(const FName Name)
 	{
 		for (const auto WadTex : Wad->Textures)
 		{
-			if (WadTex.OriginalName == Name)
+			if (WadTex.OriginalName == Name && WadTex.Texture != nullptr && WadTex.Texture->IsValidLowLevelFast())
 			{
 				TextureCache[Name.ToString()] = WadTex.Texture;
 				return WadTex.Texture;

@@ -8,7 +8,10 @@ AQWorldSpawnActor::AQWorldSpawnActor()
 	WorldSpawnMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WorldSpawnMesh"));
 	RootComponent = WorldSpawnMeshComponent;
 	WorldSpawnMeshComponent->SetMobility(EComponentMobility::Static);
-    PrimaryActorTick.bCanEverTick = false;
+	WorldSpawnClipMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WorldSpawnClipMesh"));
+	WorldSpawnClipMeshComponent->SetMobility(EComponentMobility::Static);
+	WorldSpawnClipMeshComponent->bHiddenInGame = true;
+	PrimaryActorTick.bCanEverTick = false;
 }
 
 void AQWorldSpawnActor::BeginDestroy()
@@ -21,7 +24,7 @@ void AQWorldSpawnActor::Destroyed()
 {
 	TArray<AActor*> Actors;
 	GetAttachedActors(Actors);
-	
+
 	for (auto Actor : Actors)
 	{
 		Actor->Destroy();
@@ -32,30 +35,22 @@ void AQWorldSpawnActor::Destroyed()
 void AQWorldSpawnActor::OnConstruction(const FTransform& Transform)
 {
 #ifdef UE_EDITOR
-	if (MapData->IsValidLowLevel() && MapData->WorldSpawnMesh != nullptr)
-	{
-		WorldSpawnMeshComponent->SetMobility(EComponentMobility::Static);
-		WorldSpawnMeshComponent->SetStaticMesh(MapData->WorldSpawnMesh);
-		WorldSpawnMeshComponent->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
-		WorldSpawnMeshComponent->UpdateCollisionFromStaticMesh();
-	}
-
+	SetupMeshComponent();
 #endif
 }
 
 void AQWorldSpawnActor::ReloadFromAsset()
 {
-	if (!MapData->IsValidLowLevel() || !MapData->WorldSpawnMesh->IsValidLowLevel())
+	if (!MapData->IsValidLowLevel() || !MapData->WorldSpawn.Mesh->IsValidLowLevel())
 	{
 		return;
 	}
 
-	WorldSpawnMeshComponent->SetMobility(EComponentMobility::Static);
-	WorldSpawnMeshComponent->SetStaticMesh(MapData->WorldSpawnMesh);
-	WorldSpawnMeshComponent->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
-	WorldSpawnMeshComponent->UpdateCollisionFromStaticMesh();
-	
-	
+	WorldSpawnMeshComponent->SetStaticMesh(MapData->WorldSpawn.Mesh);
+	WorldSpawnClipMeshComponent->SetStaticMesh(MapData->WorldSpawn.ClipMesh);
+	SetupMeshComponent();
+	SetPivotOffset(MapData->WorldSpawn.Pivot);
+
 	for (auto Actor : SolidEntities)
 	{
 		Actor->Destroy();
@@ -71,36 +66,37 @@ void AQWorldSpawnActor::ReloadFromAsset()
 	SolidEntities.Empty();
 	PointEntities.Empty();
 	TriggerTargets.Empty();
-	
-	for (int i = 0;  i < MapData->SolidEntities.Num(); i++)
+
+	for (int i = 0; i < MapData->SolidEntities.Num(); i++)
 	{
 		auto Entity = MapData->SolidEntities[i];
-		auto MeshStr = FString("AS_"+Entity.UniqueClassName);
+		auto MeshStr = FString("AS_" + Entity.UniqueClassName);
 		FActorSpawnParameters p;
 		p.Owner = this;
-		
+
 		auto EntityActor = GetWorld()->SpawnActor<AQSolidEntityActor>(
-			Entity.ClassTemplate,GetTransform(),p);
+			Entity.ClassTemplate, GetTransform(), p);
 
 		if (EntityActor == nullptr)
 		{
 			UE_LOG(LogTemp, Error, TEXT("Could not spawn EntityActor (%s)"), *Entity.UniqueClassName);
 			continue;
 		}
-		
-		
+
+
 #if WITH_EDITOR
 		FActorLabelUtilities::SetActorLabelUnique(EntityActor, MeshStr);
 		EntityActor->SetPivotOffset(Entity.Pivot);
 #endif
 		SetupEntityComponent(EntityActor, *MeshStr, Entity);
 		EntityActor->EntityMeshComponent->SetStaticMesh(Entity.Mesh);
+		EntityActor->ClipMeshComponent->SetStaticMesh(Entity.ClipMesh);
 		EntityActor->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
 		EntityActor->Setup();
 		SolidEntities.Emplace(EntityActor);
 	}
 
-	for (int i = 0;  i < MapData->PointEntities.Num(); i++)
+	for (int i = 0; i < MapData->PointEntities.Num(); i++)
 	{
 		auto Entity = MapData->PointEntities[i];
 		ImportPointEntity(Entity);
@@ -109,47 +105,70 @@ void AQWorldSpawnActor::ReloadFromAsset()
 
 void AQWorldSpawnActor::PostRegisterAllComponents()
 {
-	if (!GetWorld()->IsEditorWorld()  || GetWorld()->IsPlayInEditor() || MapData == nullptr)
+	if (!GetWorld()->IsEditorWorld() || GetWorld()->IsPlayInEditor() || MapData == nullptr)
 	{
 		return;
 	}
 #if WITH_EDITOR
-	if (!bAlreadyPostRegistered && MapData->WorldSpawnMesh->IsValidLowLevel() && !HasAnyFlags(RF_Transient))
+	if (!bAlreadyPostRegistered && MapData->WorldSpawn.Mesh->IsValidLowLevel() && !HasAnyFlags(RF_Transient))
 	{
 		bAlreadyPostRegistered = true;
 		UE_LOG(LogTemp, Warning, TEXT("registered all components, REROLL!!!"));
 		ReloadFromAsset();
-		MapData->QuakeMapUpdated.AddUObject(this, &AQWorldSpawnActor::ReloadFromAsset);
+		MapData->QuakeMapUpdated.AddUObject(this, &AQWorldSpawnActor::OnQuakeMapUpdated);
 	}
 #endif
 
 	Super::PostRegisterAllComponents();
 }
 
+void AQWorldSpawnActor::SetupMeshComponent() const
+{
+	if (MapData->IsValidLowLevel() && WorldSpawnMeshComponent->GetStaticMesh() != nullptr)
+	{
+		if (WorldSpawnMeshComponent->GetStaticMesh()->GetNumSourceModels() > 0)
+		{
+			WorldSpawnMeshComponent->SetMobility(EComponentMobility::Static);
+			WorldSpawnMeshComponent->SetStaticMesh(MapData->WorldSpawn.Mesh);
+			WorldSpawnMeshComponent->GetBodySetup()->CollisionTraceFlag = ECollisionTraceFlag::CTF_UseComplexAsSimple;
+			WorldSpawnMeshComponent->UpdateCollisionFromStaticMesh();
+		}
+		if (WorldSpawnClipMeshComponent->GetStaticMesh()->IsValidLowLevelFast() && WorldSpawnClipMeshComponent->
+			GetStaticMesh()->GetNumSourceModels() > 0)
+		{
+			WorldSpawnClipMeshComponent->SetMobility(EComponentMobility::Static);
+			WorldSpawnClipMeshComponent->SetStaticMesh(MapData->WorldSpawn.ClipMesh);
+			WorldSpawnClipMeshComponent->GetBodySetup()->CollisionTraceFlag =
+				ECollisionTraceFlag::CTF_UseComplexAsSimple;
+			WorldSpawnClipMeshComponent->UpdateCollisionFromStaticMesh();
+		}
+	}
+}
+
 void AQWorldSpawnActor::ImportPointEntity(const FEntity& Entity)
 {
-	auto Name = FString("AP_"+Entity.UniqueClassName);
+	auto Name = FString("AP_" + Entity.UniqueClassName);
 	FActorSpawnParameters p;
 	p.Owner = this;
 
 	auto Trans = Entity.Origin + GetTransform().GetLocation();
-	auto PtActor = GetWorld()->SpawnActor<AActor>(Entity.ClassTemplate,FTransform3d(Trans),p);
+	auto PtActor = GetWorld()->SpawnActor<AActor>(Entity.ClassTemplate, FTransform3d(Trans), p);
 
 	if (PtActor == nullptr)
 	{
 		return;
 	}
 
-	SetupEntityComponent(PtActor, *Name, Entity);	
-	
+	SetupEntityComponent(PtActor, *Name, Entity);
+
 	auto Angle = Entity.Angle;
 	if (Angle != 270 && Angle != 90)
 	{
 		Angle += 180;
 	}
-	
-	PtActor->SetActorRotation(FRotator(0,Angle,0));
-	
+
+	PtActor->SetActorRotation(FRotator(0, Angle, 0));
+
 #if WITH_EDITOR
 	FActorLabelUtilities::SetActorLabelUnique(PtActor, Name);
 #endif
@@ -169,14 +188,15 @@ void AQWorldSpawnActor::SetupEntityComponent(AActor* Actor, FName Name, const FE
 		EntityComponent->EntityData.Properties = Entity.Properties;
 		EntityComponent->EntityData.Angle = Entity.Angle;
 		EntityComponent->Initialize();
-		
+
 		if (Actor->GetClass()->ImplementsInterface(UQEntityEvents::StaticClass()) &&
 			EntityComponent->EntityData.TargetName != "")
 		{
 			if (TriggerTargets.Contains(EntityComponent->EntityData.TargetName))
 			{
 				TriggerTargets[EntityComponent->EntityData.TargetName].Targets.Add(Actor);
-			} else
+			}
+			else
 			{
 				TriggerTargets.Add(EntityComponent->EntityData.TargetName, {{Actor}});
 			}
@@ -191,5 +211,3 @@ void AQWorldSpawnActor::OnQuakeMapUpdated()
 	ReloadFromAsset();
 #endif
 }
-
-

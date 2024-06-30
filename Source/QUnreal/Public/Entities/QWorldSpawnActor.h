@@ -36,7 +36,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 	UStaticMeshComponent* WorldSpawnMeshComponent;
-
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UStaticMeshComponent* WorldSpawnClipMeshComponent;
+	
 	virtual void OnConstruction(const FTransform& Transform) override;
 	void OnQuakeMapUpdated();
 	void ReloadFromAsset();
@@ -44,6 +46,7 @@ public:
 
 private:
 	bool bAlreadyPostRegistered = false;
+	void SetupMeshComponent() const;
 	void ImportPointEntity(const FEntity &Entity);
 	void SetupEntityComponent(AActor* Actor, FName Name, const FEntity& Entity);
 };

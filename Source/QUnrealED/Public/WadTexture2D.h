@@ -8,8 +8,9 @@ USTRUCT()
 struct FWadTexture2D
 {
 	GENERATED_BODY()
-	
-	void Generate(const FString &PackagePath, FString Name, const qformats::wad::QuakeTexture *Qtex);
+
+	void SetName(FString Name);
+	void Generate(const FString &PackagePath, const qformats::wad::QuakeTexture *Qtex);
 	
 	UPROPERTY(VisibleAnywhere) FString OriginalName;
 	UPROPERTY(VisibleAnywhere) FString CleanName;

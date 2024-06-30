@@ -3,6 +3,7 @@
 
 #include <CoreMinimal.h>
 #include "AssetTypeActions_Base.h"
+#include "EditorReimportHandler.h"
 #include "QuakeWadAssetFactory.generated.h"
 
 class QUNREALED_API FQWadAssetTypeAction final : public FAssetTypeActions_Base
@@ -15,11 +16,16 @@ public:
 };
 
 UCLASS()
-class QUNREALED_API UQuakeWadAssetFactory : public UFactory
+class QUNREALED_API UQuakeWadAssetFactory : public UFactory, public FReimportHandler
 {
 	GENERATED_BODY()
 public:
 	UQuakeWadAssetFactory();
 	virtual UObject* FactoryCreateFile(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, const FString& Filename, const TCHAR* Parms, FFeedbackContext* Warn, bool& bOutOperationCanceled) override;
+	virtual bool CanReimport(UObject* Obj, TArray<FString>& OutFilenames)  override;
+	virtual void SetReimportPaths(UObject* Obj, const TArray<FString>& NewReimportPaths) override;
+	virtual EReimportResult::Type Reimport(UObject* Obj) override;
+private:
+	bool bIsReimport = false;
 
 };

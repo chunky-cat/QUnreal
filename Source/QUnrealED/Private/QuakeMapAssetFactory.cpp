@@ -59,7 +59,10 @@ UObject* UQuakeMapAssetFactory::FactoryCreateFile(UClass* InClass, UObject* InPa
 {
 	UQuakeMapAsset* newMapObj = NewObject<UQuakeMapAsset>(InParent, InClass, InName, Flags);
 	newMapObj->SourceQMapFile = Filename;
-	newMapObj->LoadMapFromFile(Filename);
+	if (!bIsReimport)
+	{
+		newMapObj->LoadMapFromFile(Filename);
+	}
 	newMapObj->PostEditChange();
 
 	newMapObj->AssetImportData->Update(Filename);
@@ -74,7 +77,7 @@ bool UQuakeMapAssetFactory::ConfigureProperties()
 
 bool UQuakeMapAssetFactory::CanReimport(UObject* Obj, TArray<FString>& OutFilenames)
 {
-	return true;
+	return Obj->GetClass() == UQuakeMapAsset::StaticClass();
 }
 
 void UQuakeMapAssetFactory::SetReimportPaths(UObject* Obj, const TArray<FString>& NewReimportPaths)
@@ -98,14 +101,21 @@ EReimportResult::Type UQuakeMapAssetFactory::Reimport(UObject* Obj)
 	auto ReimportMap = static_cast<UQuakeMapAsset*>(Obj);
 	const FString Filename = ReimportMap->AssetImportData->GetFirstFilename();
 	const FString FileExtension = FPaths::GetExtension(Filename);
-	//if( UFactory::StaticImportObject( ReimportMap->GetClass(), ReimportMap->GetOuter(), *ReimportMap->GetName(), RF_Public|RF_Standalone, *Filename, ReimportMap, this ) )
-	//{
-		// Mark the package dirty after the successful import
+	bIsReimport = true;
+	auto TempOptions = ReimportMap->Options;
+	bool bOverrideOptions = ReimportMap->bOverrideDefaultOptions;
+	FSimpleMulticastDelegate TmpMapUpdateDelegate = ReimportMap->MapData->QuakeMapUpdated;
+	if( UFactory::StaticImportObject( ReimportMap->GetClass(), ReimportMap->GetOuter(), *ReimportMap->GetName(), RF_Public|RF_Standalone, *Filename, ReimportMap, this ) )
+	{
+		bIsReimport = false;
+		ReimportMap->bOverrideDefaultOptions = bOverrideOptions;
+		ReimportMap->Options = TempOptions;
+		ReimportMap->MapData->QuakeMapUpdated = TmpMapUpdateDelegate;
 		ReimportMap->LoadMapFromFile(Filename);
 		ReimportMap->MarkPackageDirty();
 		ReimportMap->MapData->QuakeMapUpdated.Broadcast();
 		return EReimportResult::Succeeded;
-	//}
+	}
 	
-	//return EReimportResult::Succeeded;
+	return EReimportResult::Failed;
 }

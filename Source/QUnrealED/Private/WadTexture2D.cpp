@@ -4,7 +4,7 @@
 #include "Components/Image.h"
 #include "UObject/SavePackage.h"
 
-void FWadTexture2D::Generate(const FString &PackagePath, FString Name, const qformats::wad::QuakeTexture *Qtex)
+void FWadTexture2D::SetName(FString Name)
 {
 	OriginalName = Name;
 	CleanName = OriginalName;
@@ -12,7 +12,11 @@ void FWadTexture2D::Generate(const FString &PackagePath, FString Name, const qfo
 	{
 		CleanName = OriginalName.RightChop(1);
 	}
+}
 
+
+void FWadTexture2D::Generate(const FString &PackagePath, const qformats::wad::QuakeTexture *Qtex)
+{
 	//FString PackagePath = FString("/Game/QUnrealData/WadData/") + WadName + "/Textures/" + CleanName;
 	FString PackageFileName = FPackageName::LongPackageNameToFilename(PackagePath, FPackageName::GetAssetPackageExtension());
 
@@ -53,4 +57,5 @@ void FWadTexture2D::Generate(const FString &PackagePath, FString Name, const qfo
 	Texture->SRGB = true;
 	Texture->Filter = TF_Nearest;
 	Texture->UpdateResource();
+	Texture->MarkPackageDirty();
 }

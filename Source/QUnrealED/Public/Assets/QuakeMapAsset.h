@@ -46,7 +46,8 @@ public:
 
 private:
 	void Reset();
-	UStaticMesh* ConvertEntityToModel(const qformats::map::SolidEntityPtr &ent, FVector3d &OutCenter, FVector3d& OutPivot);
+	void ConvertEntityToModel(const qformats::map::SolidEntityPtr &ent, FSolidEntity& OutEntity, EQuakeEntityPivot PivotOpt);
+	void AddFaceToRawMesh(const qformats::map::FacePtr &face, FRawMesh &RawMesh);
 	FString GetUniqueEntityName(const std::string &ClassName);
 	static void MarkTexture(qformats::map::QMap *NativeMap, const FString &TextureName, qformats::map::Face::eFaceType t);
 	void FillCacheFromTextures(qformats::map::QMap* NativeMap);

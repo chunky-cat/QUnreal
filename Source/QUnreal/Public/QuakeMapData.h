@@ -28,9 +28,11 @@ struct FSolidEntity : public FEntity
 {
 	GENERATED_USTRUCT_BODY()
 	
-	UPROPERTY(VisibleAnywhere) UStaticMesh *Mesh;
-	UPROPERTY(VisibleAnywhere) FVector3d Center;
-	UPROPERTY(VisibleAnywhere) FVector3d Pivot;
+	UPROPERTY(VisibleAnywhere) UStaticMesh *Mesh = nullptr;
+	UPROPERTY(VisibleAnywhere) UStaticMesh *ClipMesh = nullptr;
+	UPROPERTY(VisibleAnywhere) FVector3d Center{};
+	UPROPERTY(VisibleAnywhere) FVector3d Pivot{};
+	UPROPERTY(VisibleAnywhere) bool bVisibleInGame=true;
 };
 
 UCLASS()
@@ -38,7 +40,7 @@ class QUNREAL_API UQuakeMapData : public UObject
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(VisibleAnywhere) UStaticMesh *WorldSpawnMesh;
+	UPROPERTY(VisibleAnywhere) FSolidEntity WorldSpawn;
 	UPROPERTY(EditAnywhere, meta = (TitleProperty = "UniqueClassName"))
 	TArray<FSolidEntity> SolidEntities;
 	UPROPERTY(EditAnywhere, meta = (TitleProperty = "UniqueClassName"))
