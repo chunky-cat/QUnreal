@@ -52,7 +52,6 @@ void AQWorldSpawnActor::ReloadFromAsset()
 		WorldSpawnClipMeshComponent->SetStaticMesh(MapData->WorldSpawn.ClipMesh);
 	}
 	SetupMeshComponent();
-	SetPivotOffset(MapData->WorldSpawn.Pivot);
 
 	for (auto Actor : SolidEntities)
 	{
@@ -148,6 +147,7 @@ void AQWorldSpawnActor::SetupMeshComponent() const
 			WorldSpawnClipMeshComponent->SetStaticMesh(MapData->WorldSpawn.ClipMesh);
 			WorldSpawnClipMeshComponent->GetBodySetup()->CollisionTraceFlag = CTF_UseComplexAsSimple;
 			WorldSpawnClipMeshComponent->UpdateCollisionFromStaticMesh();
+			WorldSpawnClipMeshComponent->SetRelativeLocation(WorldSpawnMeshComponent->GetRelativeLocation());
 		} else
 		{
 			WorldSpawnClipMeshComponent->UnregisterComponent();
