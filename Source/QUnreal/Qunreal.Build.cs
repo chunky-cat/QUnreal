@@ -42,9 +42,12 @@ public class QUnreal : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+				"RawMesh"
 			}
 		);
 
+		PublicIncludePaths.AddRange( new string[] {Path.Combine(ModuleDirectory, "qformats", "include")});
+		
 		if (Target.bBuildEditor)
 		{
 			PrivateDependencyModuleNames.Add("UnrealEd");

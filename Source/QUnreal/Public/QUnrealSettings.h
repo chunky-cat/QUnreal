@@ -19,7 +19,7 @@ enum EQuakeEntityPivot
 };
 
 USTRUCT(Blueprintable)
-struct QUNREALED_API FQuakeMapAssetOptions
+struct QUNREAL_API FQuakeMapAssetOptions
 {
 	GENERATED_BODY()
 
@@ -59,7 +59,7 @@ struct QUNREALED_API FQuakeMapAssetOptions
 
 
 USTRUCT(Blueprintable)
-struct QUNREALED_API FQuakeWadAssetOptions
+struct QUNREAL_API FQuakeWadAssetOptions
 {
 	GENERATED_BODY()
 	
@@ -68,7 +68,7 @@ struct QUNREALED_API FQuakeWadAssetOptions
 };
 
 UCLASS(Config=QUnrealEditorSettings)
-class QUNREALED_API UQUnrealSettings : public UObject
+class QUNREAL_API UQUnrealSettings : public UObject
 {
 	GENERATED_BODY()
 

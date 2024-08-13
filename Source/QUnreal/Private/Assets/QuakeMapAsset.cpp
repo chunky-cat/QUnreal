@@ -1,6 +1,6 @@
 #include "Assets/QuakeMapAsset.h"
 
-#include "QMeshBuilder.h"
+#include "Builders/QMeshBuilder.h"
 #include "Assets/QuakeWadAsset.h"
 #include "RawMesh.h"
 #include "Entities/QSolidEntityActor.h"
