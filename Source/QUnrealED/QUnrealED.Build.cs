@@ -14,10 +14,6 @@ public class QUnrealED : ModuleRules
                 "Core", "UnrealEd"
             }
         );
-
-        
-        PublicIncludePaths.AddRange( new string[] {Path.Combine(ModuleDirectory, "qformats", "include")});
-
         
         PrivateDependencyModuleNames.AddRange(
             new string[]

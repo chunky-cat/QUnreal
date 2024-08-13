@@ -1,8 +1,9 @@
 #include "Assets/QuakeMapAsset.h"
 
-#include "QMeshBuilder.h"
+#include "Builders/QMeshBuilder.h"
 #include "Assets/QuakeWadAsset.h"
 #include "RawMesh.h"
+#include "Algo/Reverse.h"
 #include "Entities/QSolidEntityActor.h"
 #include "EditorFramework/AssetImportData.h"
 #include "Entities/QSolidTriggerActor.h"
@@ -285,11 +286,13 @@ void UQuakeMapAsset::PostEditChangeProperty(FPropertyChangedEvent& e)
 	if (PropertyName == GET_MEMBER_NAME_CHECKED(FQuakeMapAssetOptions, TextureFolder))
 	{
 		LoadMapFromFile(SourceQMapFile);
+		MapData->QuakeMapUpdated.Broadcast();
 	}
 
 	if (PropertyName == GET_MEMBER_NAME_CHECKED(FQuakeMapAssetOptions, MaterialOverrideFolder))
 	{
 		LoadMapFromFile(SourceQMapFile);
+		MapData->QuakeMapUpdated.Broadcast();
 	}
 }
 
@@ -402,6 +405,34 @@ void UQuakeMapAsset::MarkTexture(qformats::map::QMap* NativeMap, const FString& 
 	}
 }
 
+static bool PathContains(FString full, FString part)
+{
+	if (!part.Contains("/"))
+	{
+		return FPaths::GetBaseFilename(full) == part;
+	}
+	TArray<FString> partSegs;
+	TArray<FString> fullSegs;
+	part.ParseIntoArray(partSegs, TEXT("/"));
+	full.ParseIntoArray(fullSegs, TEXT("/"));
+
+	if (partSegs.Num() > fullSegs.Num())
+	{
+		return false;
+	}
+
+	for (int i = 0; i < partSegs.Num(); i++)
+	{
+		auto baseFileName = FPaths::GetBaseFilename(fullSegs[fullSegs.Num()-(i+1)]);
+		if (!partSegs[partSegs.Num()-(i+1)].Equals(baseFileName))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 void UQuakeMapAsset::FillCacheFromTextures(qformats::map::QMap* NativeMap)
 {
 	for (const auto& TexName : NativeMap->GetTexturesNames())
@@ -436,8 +467,7 @@ void UQuakeMapAsset::FillCacheFromTextures(qformats::map::QMap* NativeMap)
 			{
 				for (const auto& Obj : ObjectList)
 				{
-					if (Obj.GetClass() == UTexture2D::StaticClass() && FString(TexName.c_str()) ==
-						FPaths::GetBaseFilename(Obj.GetFullName()))
+					if (Obj.GetClass() == UTexture2D::StaticClass() && PathContains(Obj.GetFullName(),FString(TexName.c_str())))
 					{
 						texture = Cast<UTexture2D>(Obj.GetAsset());
 						break;

@@ -47,7 +47,6 @@ UQuakeMapAssetFactory::UQuakeMapAssetFactory(const FObjectInitializer& ObjectIni
 {
 	Formats.Add("map;Quake Map FIle");
 	SupportedClass = UQuakeMapAsset::StaticClass();
-	
 	bCreateNew = false;
 	bEditorImport = true;
 	bAutomatedReimport = true;
@@ -59,14 +58,20 @@ UObject* UQuakeMapAssetFactory::FactoryCreateFile(UClass* InClass, UObject* InPa
 {
 	UQuakeMapAsset* newMapObj = NewObject<UQuakeMapAsset>(InParent, InClass, InName, Flags);
 	newMapObj->SourceQMapFile = Filename;
+	
 	if (!bIsReimport)
 	{
 		newMapObj->LoadMapFromFile(Filename);
 	}
 	newMapObj->PostEditChange();
-
+	
 	newMapObj->AssetImportData->Update(Filename);
+				
 	GEditor->GetEditorSubsystem<UImportSubsystem>()->OnAssetPostImport.Broadcast(this, newMapObj);
+	if (newMapObj->AssetImportData != nullptr)
+	{
+		newMapObj->AssetImportData->Update(GetCurrentFilename());
+	}
 	return newMapObj;
 }
 
@@ -77,17 +82,32 @@ bool UQuakeMapAssetFactory::ConfigureProperties()
 
 bool UQuakeMapAssetFactory::CanReimport(UObject* Obj, TArray<FString>& OutFilenames)
 {
-	return Obj->GetClass() == UQuakeMapAsset::StaticClass();
+	if (auto LensFile = Cast<UQuakeMapAsset>(Obj))
+	{
+		if (LensFile->AssetImportData != nullptr)
+		{
+			LensFile->AssetImportData->ExtractFilenames(OutFilenames);
+		}
+		else
+		{
+			OutFilenames.Add(FString{});
+		}
+
+		return true;
+	}
+	
+	return false;
 }
 
 void UQuakeMapAssetFactory::SetReimportPaths(UObject* Obj, const TArray<FString>& NewReimportPaths)
 {
-	auto ReimportMap = static_cast<UQuakeMapAsset*>(Obj);
+	auto ReimportMap = Cast<UQuakeMapAsset>(Obj);
 	if (ReimportMap != nullptr)
 	{
 		ReimportMap->SourceQMapFile = NewReimportPaths[0];
+		ReimportMap->AssetImportData->UpdateFilenameOnly(NewReimportPaths[0]);
+		
 		ReimportMap->Modify();
-		ReimportMap->AssetImportData->Update(NewReimportPaths[0]);
 	}
 }
 
@@ -98,14 +118,14 @@ int32 UQuakeMapAssetFactory::GetPriority() const
 
 EReimportResult::Type UQuakeMapAssetFactory::Reimport(UObject* Obj)
 {
-	auto ReimportMap = static_cast<UQuakeMapAsset*>(Obj);
+	auto ReimportMap = Cast<UQuakeMapAsset>(Obj);
 	const FString Filename = ReimportMap->AssetImportData->GetFirstFilename();
 	const FString FileExtension = FPaths::GetExtension(Filename);
 	bIsReimport = true;
 	auto TempOptions = ReimportMap->Options;
 	bool bOverrideOptions = ReimportMap->bOverrideDefaultOptions;
 	FSimpleMulticastDelegate TmpMapUpdateDelegate = ReimportMap->MapData->QuakeMapUpdated;
-	if( UFactory::StaticImportObject( ReimportMap->GetClass(), ReimportMap->GetOuter(), *ReimportMap->GetName(), RF_Public|RF_Standalone, *Filename, ReimportMap, this ) )
+	if( StaticImportObject( ReimportMap->GetClass(), ReimportMap->GetOuter(), *ReimportMap->GetName(), RF_Public|RF_Standalone, *Filename, ReimportMap, this ) )
 	{
 		bIsReimport = false;
 		ReimportMap->bOverrideDefaultOptions = bOverrideOptions;
@@ -114,6 +134,7 @@ EReimportResult::Type UQuakeMapAssetFactory::Reimport(UObject* Obj)
 		ReimportMap->LoadMapFromFile(Filename);
 		ReimportMap->MarkPackageDirty();
 		ReimportMap->MapData->QuakeMapUpdated.Broadcast();
+		auto sourceFiles = TArray<FAssetImportInfo::FSourceFile>();
 		return EReimportResult::Succeeded;
 	}
 	

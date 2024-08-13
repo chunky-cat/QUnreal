@@ -46,7 +46,7 @@ bool UQuakeWadAssetFactory::CanReimport(UObject* Obj, TArray<FString>& OutFilena
 
 void UQuakeWadAssetFactory::SetReimportPaths(UObject* Obj, const TArray<FString>& NewReimportPaths)
 {
-	auto ReimportMap = static_cast<UQuakeWadAsset*>(Obj);
+	auto ReimportMap = Cast<UQuakeWadAsset>(Obj);
 	if (ReimportMap != nullptr)
 	{
 		ReimportMap->SourceQWadFile = NewReimportPaths[0];

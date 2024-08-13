@@ -1,4 +1,4 @@
-#include "QMeshBuilder.h"
+#include "Builders/QMeshBuilder.h"
 
 void FQMeshBuilder::ProcessEntity(const qformats::map::SolidEntityPtr& Entity)
 {

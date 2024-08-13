@@ -9,7 +9,7 @@
 #include "QuakeMapAsset.generated.h"
 
 UCLASS()
-class QUNREALED_API UQuakeMapAsset : public UObject, public IInterface_AssetUserData
+class QUNREAL_API UQuakeMapAsset : public UObject, public IInterface_AssetUserData
 {
 	GENERATED_BODY()
 
