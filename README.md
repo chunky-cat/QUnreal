@@ -10,7 +10,9 @@
 * clone the repository into the `Plugins` folder via git:
 
 ```bash
-git clone https://github.com/chunky-cat/QUnreal && git submodule update --init
+git clone https://github.com/chunky-cat/QUnreal
+cd QUnreal
+git submodule update --init
 ```
 * Activate the QUnreal Plugin via editor or your project config file.
 
