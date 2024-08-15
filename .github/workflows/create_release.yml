@@ -9,7 +9,7 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: "recursive"
       - name: Fake name for PRs
@@ -39,7 +39,7 @@ jobs:
         if: ${{ github.event_name == 'release' }}
         uses: softprops/action-gh-release@v1
         with:
-          files: ${{env.QU_RELEASE_FILE}}
+          files: ../${{env.QU_RELEASE_FILE}}
 
 concurrency:
   group: create-release-${{ github.event.pull_request.number || github.sha }}
