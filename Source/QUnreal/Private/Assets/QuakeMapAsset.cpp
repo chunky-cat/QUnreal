@@ -377,7 +377,6 @@ void UQuakeMapAsset::ConvertEntityToModel(const qformats::map::SolidEntityPtr& E
 		FAssetRegistryModule::AssetCreated(ClipMesh);
 		builder.SetupClippingSourceModel(ClipMesh);
 		OutEntity.ClipMesh = ClipMesh;
-		OutEntity.ClipMesh->PostEditChange();
 	}
 	OutEntity.Mesh = Mesh;
 }

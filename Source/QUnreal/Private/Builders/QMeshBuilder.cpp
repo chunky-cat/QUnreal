@@ -4,10 +4,6 @@ void FQMeshBuilder::ProcessEntity(const qformats::map::SolidEntityPtr& Entity)
 {
 	for (const auto& Brush : Entity->GetClippedBrushes())
 	{
-		if (Brush.IsBlockVolume())
-		{
-			continue;
-		}
 		for (const auto& Face : Brush.GetFaces())
 		{
 			if (Face->Type() == qformats::map::Face::SOLID)
@@ -27,13 +23,9 @@ void FQMeshBuilder::ProcessEntity(const qformats::map::SolidEntityPtr& Entity)
 	OffsetIndex = 0;
 	for (const auto& Brush : Entity->GetBrushes())
 	{
-		if (!Brush.IsBlockVolume())
-		{
-			continue;
-		}
 		for (const auto& Face : Brush.GetFaces())
 		{
-			if (Face->Type() == qformats::map::Face::CLIP)
+			if (Face->Type() == qformats::map::Face::CLIP || Face->Type() == qformats::map::Face::SKIP)
 			{
 				bHasClipMesh = true;
 				AddFacetoRawMesh(Face, ClipMesh);
@@ -47,11 +39,7 @@ void FQMeshBuilder::AddFacetoRawMesh(const qformats::map::FacePtr& Face, FRawMes
 	const auto& vertices = Face->GetVertices();
 	const auto& indices = Face->GetIndices();
 
-	if (vertices.size() < 3)
-	{
-		return;
-	}
-
+	
 	for (int i = vertices.size() - 1; i >= 0; i--)
 	{
 		auto pt = vertices[i].point;
@@ -202,5 +190,6 @@ void FQMeshBuilder::SetupClippingSourceModel(UStaticMesh* Mesh)
 	Mesh->SetLightMapResolution(0);
 	Mesh->bCustomizedCollision = false;
 	Mesh->ComplexCollisionMesh = Mesh;
+	Mesh->PostEditChange();
 	Mesh->Build(true);
 }

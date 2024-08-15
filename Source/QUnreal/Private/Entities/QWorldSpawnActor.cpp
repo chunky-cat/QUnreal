@@ -55,8 +55,11 @@ void AQWorldSpawnActor::ReloadFromAsset()
 
 	for (auto Actor : SolidEntities)
 	{
-		Actor->Destroy();
-		Actor->Owner = nullptr;
+		if (Actor->IsValidLowLevelFast())
+		{
+			Actor->Destroy();
+			Actor->Owner = nullptr;	
+		}
 	}
 
 	for (auto Actor : PointEntities)

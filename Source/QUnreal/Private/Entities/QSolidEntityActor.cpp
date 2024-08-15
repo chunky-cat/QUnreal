@@ -6,6 +6,7 @@ AQSolidEntityActor::AQSolidEntityActor()
 	EntityMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EntityMesh"));
 	RootComponent = EntityMeshComponent;
 	ClipMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ClipMesh"));
+	ClipMeshComponent->SetupAttachment(CastChecked<USceneComponent, UStaticMeshComponent>(EntityMeshComponent));
 	ClipMeshComponent->bHiddenInGame = true;
 	ClipMeshComponent->SetActive(false);
 	PrimaryActorTick.bCanEverTick = false;
@@ -33,6 +34,7 @@ void AQSolidEntityActor::Setup()
 		ClipMeshComponent->SetMobility(Mobility);
 		ClipMeshComponent->SetVisibility(true);
 		ClipMeshComponent->bHiddenInGame = true;
+		ClipMeshComponent->SetRelativeLocation(EntityMeshComponent->GetRelativeLocation());
 	} else
 	{
 		ClipMeshComponent->UnregisterComponent();
