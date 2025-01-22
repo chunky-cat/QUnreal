@@ -1,3 +1,9 @@
+## NOTE: 
+
+this repo is archived, development continues here:
+
+https://github.com/QFormatPlugins/Qnreal
+
 # QUnreal
 
 ### Quake (Trenchbroom) Map and WAD importer for Unreal 5.
